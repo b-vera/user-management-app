@@ -1,5 +1,7 @@
-export const environment = {
+import { AppEnvironment } from './environment.model';
+
+export const environment: AppEnvironment = {
   production: false,
   apiUrl: 'https://dummyjson.com',
-  logLevel: 'debug' as const,
+  logLevel: 'debug',
 };

@@ -1,9 +1,11 @@
 import { Component, inject } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ToastService, Toast } from '@core/services/toast.service';
 
 @Component({
   selector: 'app-toast-container',
   standalone: true,
+  imports: [TranslatePipe],
   template: `
     <div
       aria-live="polite"
@@ -17,7 +19,7 @@ import { ToastService, Toast } from '@core/services/toast.service';
           class="flex items-start gap-3 rounded-lg px-4 py-3 shadow-lg text-sm font-medium"
         >
           <span class="mt-0.5 shrink-0 text-base">{{ icon(toast) }}</span>
-          <span class="flex-1">{{ toast.message }}</span>
+          <span class="flex-1">{{ toast.message | translate }}</span>
           <button
             (click)="toastService.dismiss(toast.id)"
             class="ml-auto shrink-0 opacity-70 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"

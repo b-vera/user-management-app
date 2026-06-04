@@ -110,6 +110,7 @@ export class UserStoreService {
         this._users.update((list) => [user, ...list]);
         this._total.update((t) => t + 1);
         this.logger.log('createUser success', user);
+        this.toast.success('common.toast.created');
       },
       error: (err: AppError) => {
         this._error.set(err);
@@ -135,6 +136,7 @@ export class UserStoreService {
         this._users.update((list) => list.map((u) => (u.id === id ? updated : u)));
         if (this._selectedUser()?.id === id) this._selectedUser.set(updated);
         this.logger.log('updateUser confirmed', updated);
+        this.toast.success('common.toast.updated');
       },
       onError: (err) => {
         this._users.set(usersSnapshot);
@@ -154,7 +156,10 @@ export class UserStoreService {
     this._total.update((t) => t - 1);
 
     this._optimistic(this.api.deleteUser(id), {
-      onSuccess: () => this.logger.log('deleteUser confirmed', { id }),
+      onSuccess: () => {
+        this.logger.log('deleteUser confirmed', { id });
+        this.toast.success('common.toast.deleted');
+      },
       onError: (err) => {
         this._users.set(usersSnapshot);
         this._total.set(totalSnapshot);
@@ -179,6 +184,7 @@ export class UserStoreService {
         this._users.update((list) => list.map((u) => (u.id === id ? updated : u)));
         if (this._selectedUser()?.id === id) this._selectedUser.set(updated);
         this.logger.log('deactivateUser confirmed', { id });
+        this.toast.success('common.toast.deactivated');
       },
       onError: (err) => {
         this._users.set(usersSnapshot);

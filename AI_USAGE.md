@@ -129,7 +129,15 @@ pero el contexto de ejecución de Angular's esbuild no lo permite.
 - Los design tokens LATAM se trasladaron a `theme.extend.colors`
 - Tailwind v4 queda documentado como incompatible con Angular CLI 18 en este contexto.
 
-3. *Pendiente*
+### Caso 3 — @angular/cdk@22 incompatible con Angular 18
+**Problema:** La IA instaló `@angular/cdk@22` (última versión) sin verificar la compatibilidad con Angular 18.
+Al usar `@angular/cdk/dialog` en `UserListComponent`, el build falló con:
+`ChangeDetectionStrategy.Eager: Unsupported change detection strategy`
+
+**Cómo se identificó:** El servidor de desarrollo crasheó al cargar el componente en el browser.
+
+**Cómo se resolvió:** Downgrade a `@angular/cdk@18.2.14` que coincide con la versión de Angular del proyecto.
+Regla aplicada: la versión de `@angular/cdk` siempre debe coincidir con la de `@angular/core`.
 
 ---
 
