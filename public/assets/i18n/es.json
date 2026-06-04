@@ -1,0 +1,132 @@
+{
+  "nav": {
+    "users": "Usuarios"
+  },
+  "app": {
+    "title": "Gestión de Usuarios"
+  },
+  "users": {
+    "list": {
+      "title": "Usuarios",
+      "search": "Buscar usuarios...",
+      "empty": "Sin usuarios",
+      "emptyDescription": "Intenta ajustar tu búsqueda o filtros.",
+      "error": "Error al cargar los usuarios",
+      "createNew": "Nuevo usuario"
+    },
+    "columns": {
+      "avatar": "Avatar",
+      "username": "Usuario",
+      "email": "Correo",
+      "name": "Nombre",
+      "role": "Rol",
+      "status": "Estado",
+      "createdAt": "Creado",
+      "actions": "Acciones"
+    },
+    "detail": {
+      "title": "Detalle de usuario",
+      "personalInfo": "Información personal",
+      "account": "Cuenta",
+      "activity": "Actividad",
+      "createdAt": "Creado el",
+      "updatedAt": "Actualizado el",
+      "notFound": "Usuario no encontrado"
+    },
+    "form": {
+      "create": {
+        "title": "Nuevo usuario",
+        "submit": "Crear usuario"
+      },
+      "edit": {
+        "title": "Editar usuario",
+        "submit": "Guardar cambios"
+      },
+      "fields": {
+        "username": "Nombre de usuario",
+        "email": "Correo electrónico",
+        "firstName": "Nombre",
+        "lastName": "Apellido",
+        "role": "Rol",
+        "status": "Estado"
+      },
+      "validation": {
+        "required": "Este campo es obligatorio",
+        "email": "Ingresa un correo electrónico válido",
+        "minLength": "Mínimo {{min}} caracteres",
+        "noSpaces": "El nombre de usuario no puede contener espacios",
+        "roleInvalid": "Selecciona un rol válido"
+      },
+      "unsavedChanges": "Tienes cambios sin guardar"
+    },
+    "roles": {
+      "admin": "Administrador",
+      "user": "Usuario",
+      "guest": "Invitado",
+      "all": "Todos los roles"
+    },
+    "status": {
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "all": "Todos"
+    },
+    "actions": {
+      "view": "Ver",
+      "edit": "Editar",
+      "deactivate": "Desactivar",
+      "activate": "Activar",
+      "delete": "Eliminar",
+      "back": "Volver"
+    }
+  },
+  "common": {
+    "actions": {
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "confirm": "Confirmar",
+      "delete": "Eliminar",
+      "retry": "Reintentar"
+    },
+    "confirm": {
+      "delete": {
+        "title": "Eliminar usuario",
+        "message": "Esta acción no se puede deshacer. ¿Estás seguro de que deseas eliminar este usuario?"
+      },
+      "deactivate": {
+        "title": "Desactivar usuario",
+        "message": "El usuario perderá acceso a la plataforma. Puedes reactivarlo más adelante."
+      }
+    },
+    "toast": {
+      "created": "Usuario creado exitosamente",
+      "updated": "Usuario actualizado exitosamente",
+      "deleted": "Usuario eliminado exitosamente",
+      "deactivated": "Usuario desactivado exitosamente",
+      "error": "Ocurrió un error. Por favor intenta de nuevo."
+    },
+    "states": {
+      "loading": "Cargando...",
+      "empty": "Sin resultados",
+      "error": "Algo salió mal",
+      "retry": "Reintentar"
+    },
+    "pagination": {
+      "page": "Página {{current}} de {{total}}",
+      "previous": "Anterior",
+      "next": "Siguiente"
+    },
+    "errors": {
+      "network": "Sin conexión a internet",
+      "notFound": "Recurso no encontrado",
+      "server": "Error del servidor. Por favor intenta más tarde.",
+      "unknown": "Ocurrió un error inesperado"
+    }
+  },
+  "theme": {
+    "light": "Cambiar a modo claro",
+    "dark": "Cambiar a modo oscuro"
+  },
+  "lang": {
+    "toggle": "Cambiar idioma"
+  }
+}

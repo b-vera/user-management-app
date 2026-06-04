@@ -5,6 +5,11 @@ import { environment } from '@env/environment';
 import { AppError } from '@core/models/user.model';
 
 export const apiInterceptor: HttpInterceptorFn = (req, next) => {
+  // Skip asset requests (i18n files, etc.) — only prefix relative API calls
+  if (!req.url.startsWith('/') || req.url.startsWith('/assets/')) {
+    return next(req);
+  }
+
   const apiReq = req.clone({
     url: `${environment.apiUrl}${req.url}`,
     setHeaders: {

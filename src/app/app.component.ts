@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { AppShellComponent } from '@shared/components/app-shell/app-shell.component';
 import { ToastContainerComponent } from '@shared/components/toast-container/toast-container.component';
+import { LanguageService } from '@core/services/language.service';
 
 @Component({
   selector: 'app-root',
@@ -11,4 +12,10 @@ import { ToastContainerComponent } from '@shared/components/toast-container/toas
     <app-toast-container />
   `,
 })
-export class AppComponent {}
+export class AppComponent implements OnInit {
+  private readonly lang = inject(LanguageService);
+
+  ngOnInit(): void {
+    this.lang.init();
+  }
+}

@@ -1,10 +1,12 @@
-import { Component, HostListener, signal } from '@angular/core';
+import { Component, HostListener, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
+import { LanguageService, AppLang } from '@core/services/language.service';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe],
   template: `
     <div class="min-h-screen bg-neutral-50 dark:bg-dark-bg flex">
       <!-- Sidebar overlay (mobile) -->
@@ -38,7 +40,10 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
               />
             </svg>
           </div>
-          <span class="text-white font-semibold text-sm leading-tight"> User<br />Management </span>
+          <span
+            class="text-white font-semibold text-sm leading-tight"
+            [innerHTML]="'app.title' | translate"
+          ></span>
         </div>
 
         <!-- Nav -->
@@ -66,7 +71,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
                 d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
               />
             </svg>
-            Usuarios
+            {{ 'nav.users' | translate }}
           </a>
         </nav>
 
@@ -110,24 +115,25 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
           <span class="flex-1"></span>
 
-          <!-- Language toggle (placeholder — wired in T12) -->
+          <!-- Language toggle -->
           <button
+            (click)="toggleLang()"
             class="text-xs font-medium px-3 py-1.5 rounded-lg border border-neutral-200
                    dark:border-neutral-700 text-neutral-600 dark:text-neutral-300
                    hover:bg-neutral-100 dark:hover:bg-neutral-800
                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo"
-            aria-label="Cambiar idioma"
+            [attr.aria-label]="'lang.toggle' | translate"
           >
-            ES / EN
+            {{ langService.currentLang() === 'es' ? 'EN' : 'ES' }}
           </button>
 
-          <!-- Dark mode toggle (wired to ThemeService in T13) -->
+          <!-- Dark mode toggle (ThemeService wired in T13) -->
           <button
             (click)="toggleDark()"
             class="p-2 rounded-lg text-neutral-600 dark:text-neutral-300
                    hover:bg-neutral-100 dark:hover:bg-neutral-800
                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo"
-            [attr.aria-label]="isDark() ? 'Activar modo claro' : 'Activar modo oscuro'"
+            [attr.aria-label]="isDark() ? ('theme.light' | translate) : ('theme.dark' | translate)"
           >
             @if (isDark()) {
               <!-- Sun icon -->
@@ -174,6 +180,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
   `,
 })
 export class AppShellComponent {
+  readonly langService = inject(LanguageService);
   readonly sidebarOpen = signal(false);
   readonly isDark = signal(false);
 
@@ -193,6 +200,11 @@ export class AppShellComponent {
     const next = !html.classList.contains('dark');
     html.classList.toggle('dark', next);
     this.isDark.set(next);
+  }
+
+  toggleLang(): void {
+    const next: AppLang = this.langService.currentLang() === 'es' ? 'en' : 'es';
+    this.langService.setLanguage(next);
   }
 
   @HostListener('document:keydown.escape')
