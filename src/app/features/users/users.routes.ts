@@ -2,13 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from '@core/guards/auth.guard';
 import { Component } from '@angular/core';
 
-// Placeholders for T16 and T17 — replaced when those tasks are implemented
-@Component({
-  standalone: true,
-  template: `<p class="text-neutral-500 p-6">Detalle de usuario — próximamente (T16)</p>`,
-})
-class UserDetailPlaceholder {}
-
+// Placeholder for T17 — replaced when UserFormComponent is implemented
 @Component({
   standalone: true,
   template: `<p class="text-neutral-500 p-6">Formulario de usuario — próximamente (T17)</p>`,
@@ -22,6 +16,11 @@ export const usersRoutes: Routes = [
     canActivate: [authGuard],
   },
   { path: 'new', component: UserFormPlaceholder, canActivate: [authGuard] },
-  { path: ':id', component: UserDetailPlaceholder, canActivate: [authGuard] },
+  {
+    path: ':id',
+    loadComponent: () =>
+      import('./user-detail/user-detail.component').then((m) => m.UserDetailComponent),
+    canActivate: [authGuard],
+  },
   { path: ':id/edit', component: UserFormPlaceholder, canActivate: [authGuard] },
 ];
