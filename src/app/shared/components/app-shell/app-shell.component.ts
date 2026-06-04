@@ -2,6 +2,7 @@ import { Component, HostListener, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { LanguageService, AppLang } from '@core/services/language.service';
+import { ThemeService } from '@core/services/theme.service';
 
 @Component({
   selector: 'app-shell',
@@ -127,15 +128,17 @@ import { LanguageService, AppLang } from '@core/services/language.service';
             {{ langService.currentLang() === 'es' ? 'EN' : 'ES' }}
           </button>
 
-          <!-- Dark mode toggle (ThemeService wired in T13) -->
+          <!-- Dark mode toggle -->
           <button
-            (click)="toggleDark()"
+            (click)="themeService.toggle()"
             class="p-2 rounded-lg text-neutral-600 dark:text-neutral-300
                    hover:bg-neutral-100 dark:hover:bg-neutral-800
                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo"
-            [attr.aria-label]="isDark() ? ('theme.light' | translate) : ('theme.dark' | translate)"
+            [attr.aria-label]="
+              themeService.isDark() ? ('theme.light' | translate) : ('theme.dark' | translate)
+            "
           >
-            @if (isDark()) {
+            @if (themeService.isDark()) {
               <!-- Sun icon -->
               <svg
                 class="w-5 h-5"
@@ -181,8 +184,8 @@ import { LanguageService, AppLang } from '@core/services/language.service';
 })
 export class AppShellComponent {
   readonly langService = inject(LanguageService);
+  readonly themeService = inject(ThemeService);
   readonly sidebarOpen = signal(false);
-  readonly isDark = signal(false);
 
   isUsersActive(): boolean {
     return location.pathname.startsWith('/users');
@@ -190,16 +193,9 @@ export class AppShellComponent {
 
   sidebarClass(): string {
     const base =
-      'fixed top-0 left-0 h-full w-60 bg-brand-indigo z-30 flex flex-col transition-transform duration-300 ease-in-out';
+      'fixed top-0 left-0 h-full w-60 z-30 flex flex-col transition-transform duration-300 ease-in-out bg-brand-indigo dark:bg-dark-surface';
     const position = this.sidebarOpen() ? 'translate-x-0' : '-translate-x-full md:translate-x-0';
     return `${base} ${position}`;
-  }
-
-  toggleDark(): void {
-    const html = document.documentElement;
-    const next = !html.classList.contains('dark');
-    html.classList.toggle('dark', next);
-    this.isDark.set(next);
   }
 
   toggleLang(): void {
