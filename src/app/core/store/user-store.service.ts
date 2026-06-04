@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { AppError, User, UserListParams } from '@core/models/user.model';
 import { UserApiService } from '@core/services/user-api.service';
 import { LoggerService } from '@core/services/logger.service';
+import { ToastService } from '@core/services/toast.service';
 
 const DEFAULT_PARAMS: UserListParams = { limit: 10, skip: 0 };
 
@@ -10,6 +11,7 @@ const DEFAULT_PARAMS: UserListParams = { limit: 10, skip: 0 };
 export class UserStoreService {
   private readonly api = inject(UserApiService);
   private readonly logger = inject(LoggerService);
+  private readonly toast = inject(ToastService);
 
   // Private writable signals
   private readonly _users = signal<User[]>([]);
@@ -112,7 +114,7 @@ export class UserStoreService {
       error: (err: AppError) => {
         this._error.set(err);
         this.logger.error('createUser failed', err);
-        // Toast wired in T09 when ToastService is available
+        this.toast.error(err.message);
       },
     });
   }
@@ -138,7 +140,7 @@ export class UserStoreService {
         this._users.set(usersSnapshot);
         this._selectedUser.set(selectedSnapshot);
         this.logger.error('updateUser rollback', err);
-        // Toast wired in T09
+        this.toast.error(err.message);
       },
     });
   }
@@ -157,7 +159,7 @@ export class UserStoreService {
         this._users.set(usersSnapshot);
         this._total.set(totalSnapshot);
         this.logger.error('deleteUser rollback', err);
-        // Toast wired in T09
+        this.toast.error(err.message);
       },
     });
   }
@@ -182,7 +184,7 @@ export class UserStoreService {
         this._users.set(usersSnapshot);
         this._selectedUser.set(selectedSnapshot);
         this.logger.error('deactivateUser rollback', err);
-        // Toast wired in T09
+        this.toast.error(err.message);
       },
     });
   }
