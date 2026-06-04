@@ -1,10 +1,15 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl } from '@angular/forms';
+import { Component, OnInit, effect, inject } from '@angular/core';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Dialog } from '@angular/cdk/dialog';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { UserStoreService } from '@core/store/user-store.service';
 import { SkeletonLoaderComponent } from '@shared/components/skeleton-loader/skeleton-loader.component';
+import {
+  ConfirmDialogComponent,
+  ConfirmDialogData,
+} from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { noWhitespace, validRole } from '@shared/validators/user.validators';
 
 @Component({
@@ -35,22 +40,63 @@ import { noWhitespace, validRole } from '@shared/validators/user.validators';
       </span>
     </nav>
 
-    <!-- Loading (edit mode only) -->
-    @if (store.isLoading() && isEditMode) {
+    <!-- Loading (edit mode) -->
+    @if (store.isLoading() && isEditMode && !store.selectedUser()) {
       <app-skeleton-loader [rows]="3" />
     } @else {
       <div
         class="bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border"
       >
         <!-- Form header -->
-        <div class="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700">
-          <h1 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-            {{
-              isEditMode
-                ? ('users.form.edit.title' | translate)
-                : ('users.form.create.title' | translate)
-            }}
-          </h1>
+        <div
+          class="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 flex items-center justify-between"
+        >
+          <div>
+            <h1 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+              {{
+                isEditMode
+                  ? ('users.form.edit.title' | translate)
+                  : ('users.form.create.title' | translate)
+              }}
+            </h1>
+            @if (form.dirty && !store.isLoading()) {
+              <p class="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+                {{ 'users.form.unsavedChanges' | translate }}
+              </p>
+            }
+          </div>
+
+          <!-- Edit mode: status badge + destructive actions -->
+          @if (isEditMode && store.selectedUser()) {
+            @let user = store.selectedUser()!;
+            <div class="flex items-center gap-2">
+              <span [class]="statusBadge(user.active)">
+                {{ (user.active ? 'users.status.active' : 'users.status.inactive') | translate }}
+              </span>
+              @if (user.active) {
+                <button
+                  (click)="onDeactivate()"
+                  class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg
+                         border border-amber-300 text-amber-700 dark:border-amber-600 dark:text-amber-400
+                         hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors
+                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                  [attr.aria-label]="'users.actions.deactivate' | translate"
+                >
+                  {{ 'users.actions.deactivate' | translate }}
+                </button>
+              }
+              <button
+                (click)="onDelete()"
+                class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg
+                       border border-crimson-300 text-crimson-600 dark:border-crimson-600 dark:text-crimson-400
+                       hover:bg-crimson-50 dark:hover:bg-crimson-900/20 transition-colors
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crimson-600"
+                [attr.aria-label]="'users.actions.delete' | translate"
+              >
+                {{ 'users.actions.delete' | translate }}
+              </button>
+            </div>
+          }
         </div>
 
         <!-- Form body -->
@@ -175,7 +221,7 @@ import { noWhitespace, validRole } from '@shared/validators/user.validators';
             </div>
 
             <!-- Role -->
-            <div class="md:col-span-2 sm:col-span-1 md:w-1/2">
+            <div class="md:col-span-2 md:w-1/2">
               <label
                 for="role"
                 class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5"
@@ -208,7 +254,7 @@ import { noWhitespace, validRole } from '@shared/validators/user.validators';
             </div>
           </div>
 
-          <!-- Form-level error -->
+          <!-- Form-level API error -->
           @if (store.hasError()) {
             <div
               class="mt-4 p-3 rounded-lg bg-crimson-50 dark:bg-crimson-900/20 border border-crimson-200 dark:border-crimson-800"
@@ -284,6 +330,7 @@ export class UserFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly dialog = inject(Dialog);
 
   isEditMode = false;
   private userId: number | null = null;
@@ -296,11 +343,27 @@ export class UserFormComponent implements OnInit {
     role: ['', [Validators.required, validRole]],
   });
 
+  constructor() {
+    // Populate form when selectedUser loads in edit mode
+    effect(() => {
+      const user = this.store.selectedUser();
+      if (user && this.isEditMode) {
+        this.form.patchValue({
+          first_name: user.first_name,
+          last_name: user.last_name,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+        });
+        this.form.markAsPristine();
+      }
+    });
+  }
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     this.isEditMode = !!id;
     this.userId = id ? Number(id) : null;
-
     if (this.isEditMode && this.userId) {
       this.store.loadUserById(this.userId);
     }
@@ -319,8 +382,48 @@ export class UserFormComponent implements OnInit {
       email: raw.email ?? '',
       role: (raw.role as 'admin' | 'user' | 'guest') || 'user',
     };
-    this.store.createUser(payload);
-    this.router.navigate(['/users']);
+
+    if (this.isEditMode && this.userId) {
+      this.store.updateUser(this.userId, payload);
+      this.router.navigate(['/users', this.userId]);
+    } else {
+      this.store.createUser(payload);
+      this.router.navigate(['/users']);
+    }
+  }
+
+  onDeactivate(): void {
+    const user = this.store.selectedUser();
+    if (!user) return;
+    const data: ConfirmDialogData = {
+      title: 'Desactivar usuario',
+      message: `El usuario "${user.username}" perderá acceso a la plataforma.`,
+      confirmLabel: 'Desactivar',
+      danger: false,
+    };
+    this.dialog.open<boolean>(ConfirmDialogComponent, { data }).closed.subscribe((result) => {
+      if (result) {
+        this.store.deactivateUser(user.id);
+        this.router.navigate(['/users', user.id]);
+      }
+    });
+  }
+
+  onDelete(): void {
+    const user = this.store.selectedUser();
+    if (!user) return;
+    const data: ConfirmDialogData = {
+      title: 'Eliminar usuario',
+      message: `¿Estás seguro de que deseas eliminar a "${user.username}"? Esta acción no se puede deshacer.`,
+      confirmLabel: 'Eliminar',
+      danger: true,
+    };
+    this.dialog.open<boolean>(ConfirmDialogComponent, { data }).closed.subscribe((result) => {
+      if (result) {
+        this.store.deleteUser(user.id);
+        this.router.navigate(['/users']);
+      }
+    });
   }
 
   fieldError(name: string): boolean {
@@ -339,7 +442,13 @@ export class UserFormComponent implements OnInit {
     return '';
   }
 
-  // Inline translation fallback — replaced by TranslateService in full i18n pass
+  statusBadge(active: boolean): string {
+    const base = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
+    return active
+      ? `${base} bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300`
+      : `${base} bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400`;
+  }
+
   private readonly translations: Record<string, string> = {
     'users.form.validation.required': 'Este campo es obligatorio',
     'users.form.validation.email': 'Ingresa un correo electrónico válido',
