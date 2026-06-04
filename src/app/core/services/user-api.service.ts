@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import {
   DummyJsonListResponse,
   DummyJsonUser,
@@ -10,10 +10,12 @@ import {
   UserListResponse,
   mapDummyJsonToUser,
 } from '@core/models/user.model';
+import { LoggerService } from '@core/services/logger.service';
 
 @Injectable({ providedIn: 'root' })
 export class UserApiService {
   private readonly http = inject(HttpClient);
+  private readonly logger = inject(LoggerService);
 
   getUsers(params: UserListParams): Observable<UserListResponse> {
     const httpParams = new HttpParams()
@@ -21,9 +23,10 @@ export class UserApiService {
       .set('skip', params.skip)
       .set('select', 'id,username,email,firstName,lastName,role,image');
 
-    return this.http
-      .get<DummyJsonListResponse>('/users', { params: httpParams })
-      .pipe(map((res) => this.mapListResponse(res)));
+    return this.http.get<DummyJsonListResponse>('/users', { params: httpParams }).pipe(
+      tap(() => this.logger.debug('getUsers', params)),
+      map((res) => this.mapListResponse(res)),
+    );
   }
 
   searchUsers(q: string, params: UserListParams): Observable<UserListResponse> {
@@ -32,13 +35,17 @@ export class UserApiService {
       .set('limit', params.limit)
       .set('skip', params.skip);
 
-    return this.http
-      .get<DummyJsonListResponse>('/users/search', { params: httpParams })
-      .pipe(map((res) => this.mapListResponse(res)));
+    return this.http.get<DummyJsonListResponse>('/users/search', { params: httpParams }).pipe(
+      tap(() => this.logger.debug('searchUsers', { q, ...params })),
+      map((res) => this.mapListResponse(res)),
+    );
   }
 
   getUserById(id: number): Observable<User> {
-    return this.http.get<DummyJsonUser>(`/users/${id}`).pipe(map((raw) => mapDummyJsonToUser(raw)));
+    return this.http.get<DummyJsonUser>(`/users/${id}`).pipe(
+      tap(() => this.logger.debug('getUserById', { id })),
+      map((raw) => mapDummyJsonToUser(raw)),
+    );
   }
 
   createUser(payload: Partial<User>): Observable<User> {
@@ -50,9 +57,10 @@ export class UserApiService {
       role: payload.role ?? 'user',
     };
 
-    return this.http
-      .post<DummyJsonUser>('/users/add', body)
-      .pipe(map((raw) => mapDummyJsonToUser(raw)));
+    return this.http.post<DummyJsonUser>('/users/add', body).pipe(
+      tap(() => this.logger.debug('createUser', payload)),
+      map((raw) => mapDummyJsonToUser(raw)),
+    );
   }
 
   updateUser(id: number, payload: Partial<User>): Observable<User> {
@@ -64,13 +72,16 @@ export class UserApiService {
     if (payload.role !== undefined) body['role'] = payload.role;
     if (payload.active !== undefined) body['active'] = payload.active;
 
-    return this.http
-      .put<DummyJsonUser>(`/users/${id}`, body)
-      .pipe(map((raw) => mapDummyJsonToUser(raw)));
+    return this.http.put<DummyJsonUser>(`/users/${id}`, body).pipe(
+      tap(() => this.logger.debug('updateUser', { id, ...payload })),
+      map((raw) => mapDummyJsonToUser(raw)),
+    );
   }
 
   deleteUser(id: number): Observable<{ id: number; isDeleted: boolean }> {
-    return this.http.delete<{ id: number; isDeleted: boolean }>(`/users/${id}`);
+    return this.http
+      .delete<{ id: number; isDeleted: boolean }>(`/users/${id}`)
+      .pipe(tap(() => this.logger.debug('deleteUser', { id })));
   }
 
   private mapListResponse(res: DummyJsonListResponse): UserListResponse {
