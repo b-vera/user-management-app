@@ -1,4 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { Observable } from 'rxjs';
 import { AppError, User, UserListParams } from '@core/models/user.model';
 import { UserApiService } from '@core/services/user-api.service';
 import { LoggerService } from '@core/services/logger.service';
@@ -37,6 +38,8 @@ export class UserStoreService {
     const totalPages = Math.ceil(total / limit);
     return { currentPage, totalPages, limit, total };
   });
+
+  // ── Read operations ────────────────────────────────────────────────────────
 
   loadUsers(params: UserListParams = DEFAULT_PARAMS): void {
     this._params.set(params);
@@ -95,62 +98,96 @@ export class UserStoreService {
     });
   }
 
+  // ── Write operations with optimistic updates ───────────────────────────────
+
   createUser(payload: Partial<User>): void {
-    this._isLoading.set(true);
     this._error.set(null);
 
     this.api.createUser(payload).subscribe({
       next: (user) => {
         this._users.update((list) => [user, ...list]);
         this._total.update((t) => t + 1);
-        this._isLoading.set(false);
         this.logger.log('createUser success', user);
       },
       error: (err: AppError) => {
         this._error.set(err);
-        this._isLoading.set(false);
         this.logger.error('createUser failed', err);
+        // Toast wired in T09 when ToastService is available
       },
     });
   }
 
   updateUser(id: number, payload: Partial<User>): void {
-    this._isLoading.set(true);
-    this._error.set(null);
+    const usersSnapshot = this._users();
+    const selectedSnapshot = this._selectedUser();
 
-    this.api.updateUser(id, payload).subscribe({
-      next: (updated) => {
+    // Optimistic: apply patch immediately
+    this._users.update((list) => list.map((u) => (u.id === id ? { ...u, ...payload } : u)));
+    if (this._selectedUser()?.id === id) {
+      this._selectedUser.update((u) => (u ? { ...u, ...payload } : null));
+    }
+
+    this._optimistic(this.api.updateUser(id, payload), {
+      onSuccess: (updated) => {
+        // Replace optimistic data with confirmed server response
         this._users.update((list) => list.map((u) => (u.id === id ? updated : u)));
         if (this._selectedUser()?.id === id) this._selectedUser.set(updated);
-        this._isLoading.set(false);
-        this.logger.log('updateUser success', updated);
+        this.logger.log('updateUser confirmed', updated);
       },
-      error: (err: AppError) => {
-        this._error.set(err);
-        this._isLoading.set(false);
-        this.logger.error('updateUser failed', err);
+      onError: (err) => {
+        this._users.set(usersSnapshot);
+        this._selectedUser.set(selectedSnapshot);
+        this.logger.error('updateUser rollback', err);
+        // Toast wired in T09
       },
     });
   }
 
   deleteUser(id: number): void {
-    this._isLoading.set(true);
-    this._error.set(null);
+    const usersSnapshot = this._users();
+    const totalSnapshot = this._total();
 
-    this.api.deleteUser(id).subscribe({
-      next: () => {
-        this._users.update((list) => list.filter((u) => u.id !== id));
-        this._total.update((t) => t - 1);
-        this._isLoading.set(false);
-        this.logger.log('deleteUser success', { id });
-      },
-      error: (err: AppError) => {
-        this._error.set(err);
-        this._isLoading.set(false);
-        this.logger.error('deleteUser failed', err);
+    // Optimistic: remove immediately
+    this._users.update((list) => list.filter((u) => u.id !== id));
+    this._total.update((t) => t - 1);
+
+    this._optimistic(this.api.deleteUser(id), {
+      onSuccess: () => this.logger.log('deleteUser confirmed', { id }),
+      onError: (err) => {
+        this._users.set(usersSnapshot);
+        this._total.set(totalSnapshot);
+        this.logger.error('deleteUser rollback', err);
+        // Toast wired in T09
       },
     });
   }
+
+  deactivateUser(id: number): void {
+    const usersSnapshot = this._users();
+    const selectedSnapshot = this._selectedUser();
+
+    // Optimistic: set active = false immediately
+    this._users.update((list) => list.map((u) => (u.id === id ? { ...u, active: false } : u)));
+    if (this._selectedUser()?.id === id) {
+      this._selectedUser.update((u) => (u ? { ...u, active: false } : null));
+    }
+
+    this._optimistic(this.api.updateUser(id, { active: false }), {
+      onSuccess: (updated) => {
+        this._users.update((list) => list.map((u) => (u.id === id ? updated : u)));
+        if (this._selectedUser()?.id === id) this._selectedUser.set(updated);
+        this.logger.log('deactivateUser confirmed', { id });
+      },
+      onError: (err) => {
+        this._users.set(usersSnapshot);
+        this._selectedUser.set(selectedSnapshot);
+        this.logger.error('deactivateUser rollback', err);
+        // Toast wired in T09
+      },
+    });
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
   setParams(params: Partial<UserListParams>): void {
     this._params.update((current) => ({ ...current, ...params }));
@@ -163,5 +200,22 @@ export class UserStoreService {
     this._error.set(null);
     this._total.set(0);
     this._params.set(DEFAULT_PARAMS);
+  }
+
+  // Shared optimistic-update runner: fires the API call and routes to callbacks.
+  // The caller is responsible for applying the optimistic mutation before invoking this.
+  private _optimistic<T>(
+    apiCall$: Observable<T>,
+    handlers: { onSuccess: (result: T) => void; onError: (err: AppError) => void },
+  ): void {
+    this._error.set(null);
+
+    apiCall$.subscribe({
+      next: (result) => handlers.onSuccess(result),
+      error: (err: AppError) => {
+        this._error.set(err);
+        handlers.onError(err);
+      },
+    });
   }
 }
