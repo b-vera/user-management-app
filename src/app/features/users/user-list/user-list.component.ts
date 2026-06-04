@@ -1,10 +1,12 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Dialog } from '@angular/cdk/dialog';
 import { TranslatePipe } from '@ngx-translate/core';
+import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 
 import { UserStoreService } from '@core/store/user-store.service';
-import { User } from '@core/models/user.model';
+import { User, UserRole } from '@core/models/user.model';
 import { SkeletonLoaderComponent } from '@shared/components/skeleton-loader/skeleton-loader.component';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '@shared/components/error-state/error-state.component';
@@ -18,6 +20,7 @@ import {
   standalone: true,
   imports: [
     RouterLink,
+    ReactiveFormsModule,
     TranslatePipe,
     SkeletonLoaderComponent,
     EmptyStateComponent,
@@ -53,6 +56,125 @@ import {
       </a>
     </div>
 
+    <!-- Search + Filters bar -->
+    <div class="flex flex-col sm:flex-row gap-3 mb-4">
+      <!-- Search -->
+      <div class="relative flex-1" role="search">
+        <svg
+          class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"
+          />
+        </svg>
+        <input
+          [formControl]="searchControl"
+          type="search"
+          [attr.placeholder]="'users.list.search' | translate"
+          [attr.aria-label]="'users.list.search' | translate"
+          class="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-neutral-300 dark:border-neutral-600
+                 bg-white dark:bg-dark-surface text-neutral-900 dark:text-neutral-100
+                 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-indigo"
+        />
+      </div>
+
+      <!-- Role filter -->
+      <select
+        [value]="filterRole()"
+        (change)="onRoleFilter($any($event.target).value)"
+        [attr.aria-label]="'users.columns.role' | translate"
+        class="px-3 py-2 text-sm rounded-lg border border-neutral-300 dark:border-neutral-600
+               bg-white dark:bg-dark-surface text-neutral-900 dark:text-neutral-100
+               focus:outline-none focus:ring-2 focus:ring-brand-indigo"
+      >
+        <option value="">{{ 'users.roles.all' | translate }}</option>
+        <option value="admin">{{ 'users.roles.admin' | translate }}</option>
+        <option value="user">{{ 'users.roles.user' | translate }}</option>
+        <option value="guest">{{ 'users.roles.guest' | translate }}</option>
+      </select>
+
+      <!-- Active filter -->
+      <select
+        (change)="onActiveFilter($any($event.target).value)"
+        [attr.aria-label]="'users.columns.status' | translate"
+        class="px-3 py-2 text-sm rounded-lg border border-neutral-300 dark:border-neutral-600
+               bg-white dark:bg-dark-surface text-neutral-900 dark:text-neutral-100
+               focus:outline-none focus:ring-2 focus:ring-brand-indigo"
+      >
+        <option value="">{{ 'users.status.all' | translate }}</option>
+        <option value="true">{{ 'users.status.active' | translate }}</option>
+        <option value="false">{{ 'users.status.inactive' | translate }}</option>
+      </select>
+    </div>
+
+    <!-- Active filter chips -->
+    @if (hasActiveFilters()) {
+      <div class="flex flex-wrap gap-2 mb-4">
+        @if (searchControl.value) {
+          <span
+            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
+                       bg-brand-indigo/10 text-brand-indigo dark:bg-brand-indigo/20"
+          >
+            "{{ searchControl.value }}"
+            <button
+              (click)="clearSearch()"
+              class="hover:text-crimson-600 focus-visible:outline-none"
+              [attr.aria-label]="'Limpiar búsqueda'"
+            >
+              ✕
+            </button>
+          </span>
+        }
+        @if (filterRole()) {
+          <span
+            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
+                       bg-brand-indigo/10 text-brand-indigo dark:bg-brand-indigo/20"
+          >
+            {{ 'users.roles.' + filterRole() | translate }}
+            <button
+              (click)="onRoleFilter('')"
+              class="hover:text-crimson-600 focus-visible:outline-none"
+              aria-label="Limpiar filtro de rol"
+            >
+              ✕
+            </button>
+          </span>
+        }
+        @if (filterActive() !== null) {
+          <span
+            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
+                       bg-brand-indigo/10 text-brand-indigo dark:bg-brand-indigo/20"
+          >
+            {{
+              filterActive()
+                ? ('users.status.active' | translate)
+                : ('users.status.inactive' | translate)
+            }}
+            <button
+              (click)="onActiveFilter('')"
+              class="hover:text-crimson-600 focus-visible:outline-none"
+              aria-label="Limpiar filtro de estado"
+            >
+              ✕
+            </button>
+          </span>
+        }
+        <button
+          (click)="clearAllFilters()"
+          class="text-xs text-neutral-500 hover:text-crimson-600 underline focus-visible:outline-none"
+        >
+          Limpiar todo
+        </button>
+      </div>
+    }
+
     <!-- Loading -->
     @if (store.isLoading()) {
       <app-skeleton-loader [rows]="10" />
@@ -67,11 +189,11 @@ import {
     }
 
     <!-- Empty -->
-    @else if (store.isEmpty()) {
+    @else if (displayedUsers().length === 0) {
       <app-empty-state
         [title]="'users.list.empty' | translate"
         [description]="'users.list.emptyDescription' | translate"
-        [actionLabel]="'users.list.createNew' | translate"
+        [actionLabel]="hasActiveFilters() ? '' : ('users.list.createNew' | translate)"
         (action)="router.navigate(['/users/new'])"
       />
     }
@@ -118,9 +240,8 @@ import {
               </tr>
             </thead>
             <tbody class="divide-y divide-neutral-100 dark:divide-neutral-700">
-              @for (user of store.users(); track user.id) {
+              @for (user of displayedUsers(); track user.id) {
                 <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
-                  <!-- Avatar -->
                   <td class="px-4 py-3">
                     @if (user.image) {
                       <img
@@ -136,8 +257,6 @@ import {
                       </div>
                     }
                   </td>
-
-                  <!-- Username + name -->
                   <td class="px-4 py-3">
                     <p class="font-medium text-neutral-900 dark:text-neutral-100">
                       {{ user.username }}
@@ -146,20 +265,14 @@ import {
                       {{ user.first_name }} {{ user.last_name }}
                     </p>
                   </td>
-
-                  <!-- Email -->
                   <td class="px-4 py-3 hidden md:table-cell text-neutral-600 dark:text-neutral-300">
                     {{ user.email }}
                   </td>
-
-                  <!-- Role badge -->
                   <td class="px-4 py-3 hidden sm:table-cell">
                     <span [class]="roleBadge(user.role)">
                       {{ 'users.roles.' + user.role | translate }}
                     </span>
                   </td>
-
-                  <!-- Status badge -->
                   <td class="px-4 py-3 hidden sm:table-cell">
                     <span [class]="statusBadge(user.active)">
                       {{
@@ -167,8 +280,6 @@ import {
                       }}
                     </span>
                   </td>
-
-                  <!-- Actions -->
                   <td class="px-4 py-3">
                     <div class="flex items-center justify-end gap-1">
                       <a
@@ -314,13 +425,40 @@ import {
     }
   `,
 })
-export class UserListComponent implements OnInit {
+export class UserListComponent implements OnInit, OnDestroy {
   readonly store = inject(UserStoreService);
   readonly router = inject(Router);
   private readonly dialog = inject(Dialog);
+  private readonly destroy$ = new Subject<void>();
+
+  readonly searchControl = new FormControl('', { nonNullable: true });
+  readonly filterRole = signal<UserRole | ''>('');
+  readonly filterActive = signal<boolean | null>(null);
+
+  // Client-side filter applied on top of server results
+  readonly displayedUsers = computed(() => {
+    let users = this.store.users();
+    const role = this.filterRole();
+    const active = this.filterActive();
+    if (role) users = users.filter((u) => u.role === role);
+    if (active !== null) users = users.filter((u) => u.active === active);
+    return users;
+  });
+
+  readonly hasActiveFilters = computed(
+    () => !!this.searchControl.value || !!this.filterRole() || this.filterActive() !== null,
+  );
 
   ngOnInit(): void {
     this.load();
+    this.searchControl.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe((q) => this._fetch(q));
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   load(): void {
@@ -330,13 +468,31 @@ export class UserListComponent implements OnInit {
   prevPage(): void {
     const { currentPage, limit } = this.store.pagination();
     if (currentPage <= 1) return;
-    this.store.loadUsers({ limit, skip: (currentPage - 2) * limit });
+    this._fetch(this.searchControl.value, (currentPage - 2) * limit);
   }
 
   nextPage(): void {
     const { currentPage, totalPages, limit } = this.store.pagination();
     if (currentPage >= totalPages) return;
-    this.store.loadUsers({ limit, skip: currentPage * limit });
+    this._fetch(this.searchControl.value, currentPage * limit);
+  }
+
+  onRoleFilter(role: UserRole | ''): void {
+    this.filterRole.set(role);
+  }
+
+  onActiveFilter(value: string): void {
+    this.filterActive.set(value === '' ? null : value === 'true');
+  }
+
+  clearSearch(): void {
+    this.searchControl.setValue('');
+  }
+
+  clearAllFilters(): void {
+    this.searchControl.setValue('');
+    this.filterRole.set('');
+    this.filterActive.set(null);
   }
 
   onDelete(user: User): void {
@@ -346,8 +502,7 @@ export class UserListComponent implements OnInit {
       confirmLabel: 'Eliminar',
       danger: true,
     };
-    const ref = this.dialog.open<boolean>(ConfirmDialogComponent, { data });
-    ref.closed.subscribe((result) => {
+    this.dialog.open<boolean>(ConfirmDialogComponent, { data }).closed.subscribe((result) => {
       if (result) this.store.deleteUser(user.id);
     });
   }
@@ -359,8 +514,7 @@ export class UserListComponent implements OnInit {
       confirmLabel: 'Desactivar',
       danger: false,
     };
-    const ref = this.dialog.open<boolean>(ConfirmDialogComponent, { data });
-    ref.closed.subscribe((result) => {
+    this.dialog.open<boolean>(ConfirmDialogComponent, { data }).closed.subscribe((result) => {
       if (result) this.store.deactivateUser(user.id);
     });
   }
@@ -384,5 +538,14 @@ export class UserListComponent implements OnInit {
     return active
       ? `${base} bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300`
       : `${base} bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400`;
+  }
+
+  private _fetch(q: string, skip = 0): void {
+    const limit = this.store.params().limit;
+    if (q.trim()) {
+      this.store.searchUsers(q.trim(), { limit, skip });
+    } else {
+      this.store.loadUsers({ limit, skip });
+    }
   }
 }
