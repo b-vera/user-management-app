@@ -15,8 +15,8 @@
 | Area | AI % | Human % | Notes |
 |------|------|---------|-------|
 | Architecture | 60% | 40% | AI propuso opciones; humano tomó las decisiones finales (state, UI lib, bonus scope) |
-| Components | — | — | *Pendiente* |
-| Services | — | — | *Pendiente* |
+| Components | 80% | 20% | IA generó templates completos; humano revisó, ajustó clases responsive y aprobó |
+| Services | 75% | 25% | IA generó lógica de servicios; humano identificó bugs (CDK overlay, optimistic updates) |
 | Tests | — | — | *Pendiente* |
 | CI/CD | — | — | *Pendiente* |
 | Documentation | 50% | 50% | AI generó estructura; humano revisó y completó con contexto real |
@@ -83,15 +83,43 @@ ANTES de escribir código...
 #### Qué descarté
 - Nada descartado en esta sesión
 
+### Session 03 — T19: Responsive design
+**Fecha:** 2026-06-04
+**Fase:** Fase 8 — Quality
+
+#### Prompt enviado
+```
+trabajemos en el T19
+[contexto: BACKLOG.md T19 cargado en el IDE — Responsive design para mobile/tablet/desktop]
+```
+
+#### Qué generó la IA
+- `AppShellComponent`: sidebar colapsado (solo iconos, `md:w-16`) en tablet y expandido (`xl:w-60`) en desktop con `justify-center xl:justify-start` en brand y nav items; texto del nav envuelto en `<span class="hidden xl:inline">`; margen del contenido `md:ml-16 xl:ml-60`
+- `UserListComponent`: vista de cards (`md:hidden`) para mobile con avatar, nombre, email, badges y acciones; tabla original envuelta en `hidden md:block` para tablet+; paginación duplicada para la vista mobile
+- `UserFormComponent`: header del formulario en modo edit cambiado a `flex-col sm:flex-row` para evitar overflow de botones en mobile; padding del body `p-4 sm:p-6`
+- Fix del `ConfirmDialogService`: `positionStrategy` con `global().centerHorizontally().centerVertically()` para centrar el modal
+- Fix de `styles.scss`: CSS base del CDK overlay (`cdk-overlay-container`, `cdk-global-overlay-wrapper`, `cdk-overlay-pane`, `cdk-overlay-backdrop`) que faltaba y causaba que el modal apareciera fuera del viewport
+
+#### Qué acepté
+- Breakpoints `md` (768px) para el cambio tabla→cards y `xl` (1280px) para el sidebar completo
+- Cards con footer de acciones destructivas separado visualmente del contenido principal
+- Columna de email oculta hasta `lg` en la tabla para dar espacio a role y status en tablet
+
+#### Qué modifiqué
+- Identifiqué que el modal seguía apareciendo abajo tras el primer fix del servicio; la IA diagnosticó que faltaba el CSS base del CDK overlay (`overlay-prebuilt.css`) y lo añadió directamente en `styles.scss`
+
+#### Qué descarté
+- Nada descartado en esta sesión
+
 ---
 
 ## Where AI Helped Most
 
 > Se completa con ejemplos concretos al terminar el proyecto.
 
-1. *Pendiente — completar al cerrar Fase 1 (Core Infrastructure)*
-2. *Pendiente — completar al cerrar Fase 5 (Feature: User List)*
-3. *Pendiente — completar al cerrar Fase 9 (Tests)*
+1. **Templates complejos con Tailwind**: la IA generó todos los templates de `UserListComponent`, `UserDetailComponent` y `UserFormComponent` con clases Tailwind, dark mode, badges por rol/estado, tooltips, accesibilidad y lógica de renderizado condicional — trabajo que habría tomado días manual.
+2. *Pendiente — completar al cerrar Fase 9 (Tests)*
+3. *Pendiente — completar al cerrar Fase 10 (E2E)*
 
 ---
 
@@ -128,6 +156,20 @@ pero el contexto de ejecución de Angular's esbuild no lo permite.
 - `styles.scss` con `@tailwind base/components/utilities`
 - Los design tokens LATAM se trasladaron a `theme.extend.colors`
 - Tailwind v4 queda documentado como incompatible con Angular CLI 18 en este contexto.
+
+### Caso 4 — CDK overlay CSS base faltante: modal fuera del viewport
+**Problema:** El `ConfirmDialog` (CDK Dialog) aparecía en la parte inferior de la página
+en lugar de centrarse en el viewport. Añadir `positionStrategy` al servicio no lo resolvió.
+
+**Cómo se identificó:** El usuario reportó visualmente que el modal seguía apareciendo abajo
+tras el primer intento de fix (agregar `positionStrategy` al `DialogConfig`).
+
+**Cómo se resolvió:** La IA diagnosticó que faltaba el CSS base de `@angular/cdk/overlay-prebuilt.css`,
+que no estaba siendo importado en ningún lugar. Sin él, `.cdk-overlay-container` no tiene
+`position: fixed` y no cubre el viewport — el overlay queda anclado al flujo del documento.
+Se añadieron las reglas esenciales del prebuilt directamente en `styles.scss`:
+`.cdk-overlay-container` (position fixed, z-index 1000), `.cdk-global-overlay-wrapper`
+(display flex, centering), `.cdk-overlay-pane` y `.cdk-overlay-backdrop`.
 
 ### Caso 3 — @angular/cdk@22 incompatible con Angular 18
 **Problema:** La IA instaló `@angular/cdk@22` (última versión) sin verificar la compatibilidad con Angular 18.

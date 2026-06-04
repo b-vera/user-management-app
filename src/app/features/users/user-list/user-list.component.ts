@@ -1,19 +1,15 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { Dialog } from '@angular/cdk/dialog';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 
 import { UserStoreService } from '@core/store/user-store.service';
+import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 import { User, UserRole } from '@core/models/user.model';
 import { SkeletonLoaderComponent } from '@shared/components/skeleton-loader/skeleton-loader.component';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '@shared/components/error-state/error-state.component';
-import {
-  ConfirmDialogComponent,
-  ConfirmDialogData,
-} from '@shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-user-list',
@@ -200,8 +196,167 @@ import {
 
     <!-- Data -->
     @else {
+      <!-- Mobile: cards (< md) -->
+      <div class="md:hidden space-y-3">
+        @for (user of displayedUsers(); track user.id) {
+          <div
+            class="bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border overflow-hidden"
+          >
+            <div class="p-4 flex items-start gap-3">
+              <!-- Avatar -->
+              @if (user.image) {
+                <img
+                  [src]="user.image"
+                  [alt]="user.first_name + ' ' + user.last_name"
+                  class="w-10 h-10 rounded-full object-cover shrink-0"
+                />
+              } @else {
+                <div
+                  class="w-10 h-10 rounded-full bg-brand-indigo flex items-center justify-center text-white text-xs font-semibold shrink-0"
+                >
+                  {{ initials(user) }}
+                </div>
+              }
+              <!-- Content -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
+                      {{ user.username }}
+                    </p>
+                    <p class="text-xs text-neutral-500 dark:text-neutral-400">
+                      {{ user.first_name }} {{ user.last_name }}
+                    </p>
+                  </div>
+                  <!-- View + Edit -->
+                  <div class="flex items-center gap-1 shrink-0">
+                    <a
+                      [routerLink]="['/users', user.id]"
+                      class="p-1.5 rounded-lg text-neutral-500 hover:text-brand-indigo hover:bg-indigo-50
+                             dark:hover:bg-indigo-900/20 transition-colors
+                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo"
+                      [attr.aria-label]="('users.actions.view' | translate) + ' ' + user.username"
+                    >
+                      <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                    </a>
+                    <a
+                      [routerLink]="['/users', user.id, 'edit']"
+                      class="p-1.5 rounded-lg text-neutral-500 hover:text-brand-indigo hover:bg-indigo-50
+                             dark:hover:bg-indigo-900/20 transition-colors
+                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo"
+                      [attr.aria-label]="('users.actions.edit' | translate) + ' ' + user.username"
+                    >
+                      <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+                <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1 truncate">
+                  {{ user.email }}
+                </p>
+                <div class="flex flex-wrap items-center gap-2 mt-2">
+                  <span [class]="roleBadge(user.role)">
+                    {{ 'users.roles.' + user.role | translate }}
+                  </span>
+                  <span [class]="statusBadge(user.active)">
+                    {{
+                      (user.active ? 'users.status.active' : 'users.status.inactive') | translate
+                    }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <!-- Destructive actions footer -->
+            <div
+              class="flex items-center gap-4 px-4 py-2.5 border-t border-neutral-100 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50"
+            >
+              @if (user.active) {
+                <button
+                  (click)="onDeactivate(user)"
+                  class="text-xs font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400
+                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded"
+                  [attr.aria-label]="('users.actions.deactivate' | translate) + ' ' + user.username"
+                >
+                  {{ 'users.actions.deactivate' | translate }}
+                </button>
+              }
+              <button
+                (click)="onDelete(user)"
+                class="text-xs font-medium text-crimson-600 hover:text-crimson-700 dark:text-crimson-400
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crimson-600 rounded"
+                [attr.aria-label]="('users.actions.delete' | translate) + ' ' + user.username"
+              >
+                {{ 'users.actions.delete' | translate }}
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Mobile pagination -->
+        <div class="flex items-center justify-between py-2">
+          <p class="text-sm text-neutral-600 dark:text-neutral-400">
+            {{
+              'common.pagination.page'
+                | translate
+                  : {
+                      current: store.pagination().currentPage,
+                      total: store.pagination().totalPages,
+                    }
+            }}
+          </p>
+          <div class="flex gap-2">
+            <button
+              (click)="prevPage()"
+              [disabled]="store.pagination().currentPage <= 1"
+              class="px-3 py-1.5 text-sm font-medium rounded-lg border border-neutral-300 dark:border-neutral-600
+                     text-neutral-700 dark:text-neutral-300 disabled:opacity-40 disabled:cursor-not-allowed
+                     hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo"
+            >
+              {{ 'common.pagination.previous' | translate }}
+            </button>
+            <button
+              (click)="nextPage()"
+              [disabled]="store.pagination().currentPage >= store.pagination().totalPages"
+              class="px-3 py-1.5 text-sm font-medium rounded-lg border border-neutral-300 dark:border-neutral-600
+                     text-neutral-700 dark:text-neutral-300 disabled:opacity-40 disabled:cursor-not-allowed
+                     hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo"
+            >
+              {{ 'common.pagination.next' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tablet+: table (md+) -->
       <div
-        class="bg-white dark:bg-dark-surface rounded-xl shadow-sm overflow-hidden border border-neutral-200 dark:border-dark-border"
+        class="hidden md:block bg-white dark:bg-dark-surface rounded-xl shadow-sm overflow-hidden border border-neutral-200 dark:border-dark-border"
       >
         <div class="overflow-x-auto">
           <table class="w-full text-sm" [attr.aria-label]="'users.list.title' | translate">
@@ -218,17 +373,17 @@ import {
                   {{ 'users.columns.username' | translate }}
                 </th>
                 <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider hidden md:table-cell"
+                  class="px-4 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider hidden lg:table-cell"
                 >
                   {{ 'users.columns.email' | translate }}
                 </th>
                 <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider hidden sm:table-cell"
+                  class="px-4 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider"
                 >
                   {{ 'users.columns.role' | translate }}
                 </th>
                 <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider hidden sm:table-cell"
+                  class="px-4 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider"
                 >
                   {{ 'users.columns.status' | translate }}
                 </th>
@@ -265,15 +420,15 @@ import {
                       {{ user.first_name }} {{ user.last_name }}
                     </p>
                   </td>
-                  <td class="px-4 py-3 hidden md:table-cell text-neutral-600 dark:text-neutral-300">
+                  <td class="px-4 py-3 hidden lg:table-cell text-neutral-600 dark:text-neutral-300">
                     {{ user.email }}
                   </td>
-                  <td class="px-4 py-3 hidden sm:table-cell">
+                  <td class="px-4 py-3">
                     <span [class]="roleBadge(user.role)">
                       {{ 'users.roles.' + user.role | translate }}
                     </span>
                   </td>
-                  <td class="px-4 py-3 hidden sm:table-cell">
+                  <td class="px-4 py-3">
                     <span [class]="statusBadge(user.active)">
                       {{
                         (user.active ? 'users.status.active' : 'users.status.inactive') | translate
@@ -282,9 +437,10 @@ import {
                   </td>
                   <td class="px-4 py-3">
                     <div class="flex items-center justify-end gap-1">
+                      <!-- Ver -->
                       <a
                         [routerLink]="['/users', user.id]"
-                        class="p-1.5 rounded-lg text-neutral-500 hover:text-brand-indigo hover:bg-indigo-50
+                        class="relative group p-1.5 rounded-lg text-neutral-500 hover:text-brand-indigo hover:bg-indigo-50
                                dark:hover:bg-indigo-900/20 transition-colors
                                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo"
                         [attr.aria-label]="('users.actions.view' | translate) + ' ' + user.username"
@@ -303,10 +459,17 @@ import {
                             d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                           />
                         </svg>
+                        <span
+                          class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap rounded px-2 py-1 text-xs text-white bg-neutral-900 dark:bg-neutral-700 opacity-0 group-hover:opacity-100 transition-opacity z-50"
+                        >
+                          {{ 'users.actions.view' | translate }}
+                        </span>
                       </a>
+
+                      <!-- Editar -->
                       <a
                         [routerLink]="['/users', user.id, 'edit']"
-                        class="p-1.5 rounded-lg text-neutral-500 hover:text-brand-indigo hover:bg-indigo-50
+                        class="relative group p-1.5 rounded-lg text-neutral-500 hover:text-brand-indigo hover:bg-indigo-50
                                dark:hover:bg-indigo-900/20 transition-colors
                                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo"
                         [attr.aria-label]="('users.actions.edit' | translate) + ' ' + user.username"
@@ -325,11 +488,18 @@ import {
                             d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                           />
                         </svg>
+                        <span
+                          class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap rounded px-2 py-1 text-xs text-white bg-neutral-900 dark:bg-neutral-700 opacity-0 group-hover:opacity-100 transition-opacity z-50"
+                        >
+                          {{ 'users.actions.edit' | translate }}
+                        </span>
                       </a>
+
                       @if (user.active) {
+                        <!-- Desactivar -->
                         <button
                           (click)="onDeactivate(user)"
-                          class="p-1.5 rounded-lg text-neutral-500 hover:text-amber-600 hover:bg-amber-50
+                          class="relative group p-1.5 rounded-lg text-neutral-500 hover:text-amber-600 hover:bg-amber-50
                                  dark:hover:bg-amber-900/20 transition-colors
                                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                           [attr.aria-label]="
@@ -350,11 +520,18 @@ import {
                               d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
                             />
                           </svg>
+                          <span
+                            class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap rounded px-2 py-1 text-xs text-white bg-neutral-900 dark:bg-neutral-700 opacity-0 group-hover:opacity-100 transition-opacity z-50"
+                          >
+                            {{ 'users.actions.deactivate' | translate }}
+                          </span>
                         </button>
                       }
+
+                      <!-- Eliminar -->
                       <button
                         (click)="onDelete(user)"
-                        class="p-1.5 rounded-lg text-neutral-500 hover:text-crimson-600 hover:bg-crimson-50
+                        class="relative group p-1.5 rounded-lg text-neutral-500 hover:text-crimson-600 hover:bg-crimson-50
                                dark:hover:bg-crimson-900/20 transition-colors
                                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crimson-600"
                         [attr.aria-label]="
@@ -375,6 +552,11 @@ import {
                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                           />
                         </svg>
+                        <span
+                          class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap rounded px-2 py-1 text-xs text-white bg-neutral-900 dark:bg-neutral-700 opacity-0 group-hover:opacity-100 transition-opacity z-50"
+                        >
+                          {{ 'users.actions.delete' | translate }}
+                        </span>
                       </button>
                     </div>
                   </td>
@@ -428,7 +610,7 @@ import {
 export class UserListComponent implements OnInit, OnDestroy {
   readonly store = inject(UserStoreService);
   readonly router = inject(Router);
-  private readonly dialog = inject(Dialog);
+  private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly destroy$ = new Subject<void>();
 
   readonly searchControl = new FormControl('', { nonNullable: true });
@@ -496,27 +678,29 @@ export class UserListComponent implements OnInit, OnDestroy {
   }
 
   onDelete(user: User): void {
-    const data: ConfirmDialogData = {
-      title: `Eliminar usuario`,
-      message: `¿Estás seguro de que deseas eliminar a "${user.username}"? Esta acción no se puede deshacer.`,
-      confirmLabel: 'Eliminar',
-      danger: true,
-    };
-    this.dialog.open<boolean>(ConfirmDialogComponent, { data }).closed.subscribe((result) => {
-      if (result) this.store.deleteUser(user.id);
-    });
+    this.confirmDialog
+      .open({
+        title: 'Eliminar usuario',
+        message: `¿Estás seguro de que deseas eliminar a "${user.username}"? Esta acción no se puede deshacer.`,
+        confirmLabel: 'Eliminar',
+        danger: true,
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) this.store.deleteUser(user.id);
+      });
   }
 
   onDeactivate(user: User): void {
-    const data: ConfirmDialogData = {
-      title: `Desactivar usuario`,
-      message: `El usuario "${user.username}" perderá acceso a la plataforma.`,
-      confirmLabel: 'Desactivar',
-      danger: false,
-    };
-    this.dialog.open<boolean>(ConfirmDialogComponent, { data }).closed.subscribe((result) => {
-      if (result) this.store.deactivateUser(user.id);
-    });
+    this.confirmDialog
+      .open({
+        title: 'Desactivar usuario',
+        message: `El usuario "${user.username}" perderá acceso a la plataforma.`,
+        confirmLabel: 'Desactivar',
+        danger: false,
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) this.store.deactivateUser(user.id);
+      });
   }
 
   initials(user: User): string {

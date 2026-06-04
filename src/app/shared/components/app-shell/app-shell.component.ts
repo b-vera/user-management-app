@@ -22,7 +22,9 @@ import { ThemeService } from '@core/services/theme.service';
       <!-- Sidebar -->
       <aside [class]="sidebarClass()" aria-label="Navegación principal">
         <!-- Brand -->
-        <div class="flex items-center gap-3 px-6 py-5 border-b border-white/10">
+        <div
+          class="flex items-center justify-center xl:justify-start gap-3 px-3 xl:px-6 py-5 border-b border-white/10"
+        >
           <div
             class="w-8 h-8 rounded-lg bg-brand-crimson flex items-center justify-center shrink-0"
           >
@@ -42,7 +44,7 @@ import { ThemeService } from '@core/services/theme.service';
             </svg>
           </div>
           <span
-            class="text-white font-semibold text-sm leading-tight"
+            class="text-white font-semibold text-sm leading-tight hidden xl:inline"
             [innerHTML]="'app.title' | translate"
           ></span>
         </div>
@@ -52,10 +54,11 @@ import { ThemeService } from '@core/services/theme.service';
           <a
             routerLink="/users"
             routerLinkActive="bg-white/10 border-l-2 border-brand-crimson"
-            class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/80
+            class="flex items-center justify-center xl:justify-start gap-3 px-3 py-2.5 rounded-lg text-white/80
                    hover:bg-white/10 hover:text-white transition-colors text-sm font-medium
                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             [attr.aria-current]="isUsersActive() ? 'page' : null"
+            [title]="'nav.users' | translate"
             (click)="sidebarOpen.set(false)"
           >
             <svg
@@ -72,18 +75,18 @@ import { ThemeService } from '@core/services/theme.service';
                 d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
               />
             </svg>
-            {{ 'nav.users' | translate }}
+            <span class="hidden xl:inline">{{ 'nav.users' | translate }}</span>
           </a>
         </nav>
 
         <!-- Footer -->
-        <div class="px-6 py-4 border-t border-white/10">
-          <p class="text-white/40 text-xs">v1.0.0</p>
+        <div class="px-3 xl:px-6 py-4 border-t border-white/10">
+          <p class="text-white/40 text-xs hidden xl:block">v1.0.0</p>
         </div>
       </aside>
 
       <!-- Main -->
-      <div class="flex-1 flex flex-col md:ml-60">
+      <div class="flex-1 flex flex-col md:ml-16 xl:ml-60">
         <!-- Topbar -->
         <header
           class="sticky top-0 z-10 h-16 bg-white dark:bg-dark-surface border-b
@@ -193,7 +196,7 @@ export class AppShellComponent {
 
   sidebarClass(): string {
     const base =
-      'fixed top-0 left-0 h-full w-60 z-30 flex flex-col transition-transform duration-300 ease-in-out bg-brand-indigo dark:bg-dark-surface';
+      'fixed top-0 left-0 h-full w-60 md:w-16 xl:w-60 z-30 flex flex-col transition-transform duration-300 ease-in-out bg-brand-indigo dark:bg-dark-surface';
     const position = this.sidebarOpen() ? 'translate-x-0' : '-translate-x-full md:translate-x-0';
     return `${base} ${position}`;
   }

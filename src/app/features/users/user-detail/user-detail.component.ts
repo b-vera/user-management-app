@@ -1,16 +1,12 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Dialog } from '@angular/cdk/dialog';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { UserStoreService } from '@core/store/user-store.service';
+import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 import { SkeletonLoaderComponent } from '@shared/components/skeleton-loader/skeleton-loader.component';
 import { ErrorStateComponent } from '@shared/components/error-state/error-state.component';
-import {
-  ConfirmDialogComponent,
-  ConfirmDialogData,
-} from '@shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-user-detail',
@@ -301,7 +297,7 @@ export class UserDetailComponent implements OnInit {
   readonly store = inject(UserStoreService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly dialog = inject(Dialog);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   ngOnInit(): void {
     this.load();
@@ -315,32 +311,34 @@ export class UserDetailComponent implements OnInit {
   onDeactivate(): void {
     const user = this.store.selectedUser();
     if (!user) return;
-    const data: ConfirmDialogData = {
-      title: 'Desactivar usuario',
-      message: `El usuario "${user.username}" perderá acceso a la plataforma.`,
-      confirmLabel: 'Desactivar',
-      danger: false,
-    };
-    this.dialog.open<boolean>(ConfirmDialogComponent, { data }).closed.subscribe((result) => {
-      if (result) this.store.deactivateUser(user.id);
-    });
+    this.confirmDialog
+      .open({
+        title: 'Desactivar usuario',
+        message: `El usuario "${user.username}" perderá acceso a la plataforma.`,
+        confirmLabel: 'Desactivar',
+        danger: false,
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) this.store.deactivateUser(user.id);
+      });
   }
 
   onDelete(): void {
     const user = this.store.selectedUser();
     if (!user) return;
-    const data: ConfirmDialogData = {
-      title: 'Eliminar usuario',
-      message: `¿Estás seguro de que deseas eliminar a "${user.username}"? Esta acción no se puede deshacer.`,
-      confirmLabel: 'Eliminar',
-      danger: true,
-    };
-    this.dialog.open<boolean>(ConfirmDialogComponent, { data }).closed.subscribe((result) => {
-      if (result) {
-        this.store.deleteUser(user.id);
-        this.router.navigate(['/users']);
-      }
-    });
+    this.confirmDialog
+      .open({
+        title: 'Eliminar usuario',
+        message: `¿Estás seguro de que deseas eliminar a "${user.username}"? Esta acción no se puede deshacer.`,
+        confirmLabel: 'Eliminar',
+        danger: true,
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.store.deleteUser(user.id);
+          this.router.navigate(['/users']);
+        }
+      });
   }
 
   initials(): string {

@@ -1,15 +1,11 @@
 import { Component, OnInit, effect, inject } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Dialog } from '@angular/cdk/dialog';
 import { TranslatePipe } from '@ngx-translate/core';
 
 import { UserStoreService } from '@core/store/user-store.service';
+import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 import { SkeletonLoaderComponent } from '@shared/components/skeleton-loader/skeleton-loader.component';
-import {
-  ConfirmDialogComponent,
-  ConfirmDialogData,
-} from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { noWhitespace, validRole } from '@shared/validators/user.validators';
 
 @Component({
@@ -49,7 +45,7 @@ import { noWhitespace, validRole } from '@shared/validators/user.validators';
       >
         <!-- Form header -->
         <div
-          class="px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 flex items-center justify-between"
+          class="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-neutral-700 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between"
         >
           <div>
             <h1 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
@@ -69,7 +65,7 @@ import { noWhitespace, validRole } from '@shared/validators/user.validators';
           <!-- Edit mode: status badge + destructive actions -->
           @if (isEditMode && store.selectedUser()) {
             @let user = store.selectedUser()!;
-            <div class="flex items-center gap-2">
+            <div class="flex items-center flex-wrap gap-2">
               <span [class]="statusBadge(user.active)">
                 {{ (user.active ? 'users.status.active' : 'users.status.inactive') | translate }}
               </span>
@@ -100,7 +96,7 @@ import { noWhitespace, validRole } from '@shared/validators/user.validators';
         </div>
 
         <!-- Form body -->
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="p-6">
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="p-4 sm:p-6">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- First name -->
             <div>
@@ -330,7 +326,7 @@ export class UserFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly dialog = inject(Dialog);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
   isEditMode = false;
   private userId: number | null = null;
@@ -395,35 +391,37 @@ export class UserFormComponent implements OnInit {
   onDeactivate(): void {
     const user = this.store.selectedUser();
     if (!user) return;
-    const data: ConfirmDialogData = {
-      title: 'Desactivar usuario',
-      message: `El usuario "${user.username}" perderá acceso a la plataforma.`,
-      confirmLabel: 'Desactivar',
-      danger: false,
-    };
-    this.dialog.open<boolean>(ConfirmDialogComponent, { data }).closed.subscribe((result) => {
-      if (result) {
-        this.store.deactivateUser(user.id);
-        this.router.navigate(['/users', user.id]);
-      }
-    });
+    this.confirmDialog
+      .open({
+        title: 'Desactivar usuario',
+        message: `El usuario "${user.username}" perderá acceso a la plataforma.`,
+        confirmLabel: 'Desactivar',
+        danger: false,
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.store.deactivateUser(user.id);
+          this.router.navigate(['/users', user.id]);
+        }
+      });
   }
 
   onDelete(): void {
     const user = this.store.selectedUser();
     if (!user) return;
-    const data: ConfirmDialogData = {
-      title: 'Eliminar usuario',
-      message: `¿Estás seguro de que deseas eliminar a "${user.username}"? Esta acción no se puede deshacer.`,
-      confirmLabel: 'Eliminar',
-      danger: true,
-    };
-    this.dialog.open<boolean>(ConfirmDialogComponent, { data }).closed.subscribe((result) => {
-      if (result) {
-        this.store.deleteUser(user.id);
-        this.router.navigate(['/users']);
-      }
-    });
+    this.confirmDialog
+      .open({
+        title: 'Eliminar usuario',
+        message: `¿Estás seguro de que deseas eliminar a "${user.username}"? Esta acción no se puede deshacer.`,
+        confirmLabel: 'Eliminar',
+        danger: true,
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.store.deleteUser(user.id);
+          this.router.navigate(['/users']);
+        }
+      });
   }
 
   fieldError(name: string): boolean {
