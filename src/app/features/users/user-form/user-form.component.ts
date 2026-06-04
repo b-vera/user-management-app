@@ -111,6 +111,7 @@ import { noWhitespace, validRole } from '@shared/validators/user.validators';
                 id="first_name"
                 formControlName="first_name"
                 type="text"
+                aria-required="true"
                 [attr.aria-describedby]="fieldError('first_name') ? 'first_name-error' : null"
                 [attr.aria-invalid]="fieldError('first_name') ? 'true' : null"
                 class="w-full px-3 py-2 text-sm rounded-lg border transition-colors
@@ -140,6 +141,7 @@ import { noWhitespace, validRole } from '@shared/validators/user.validators';
                 id="last_name"
                 formControlName="last_name"
                 type="text"
+                aria-required="true"
                 [attr.aria-describedby]="fieldError('last_name') ? 'last_name-error' : null"
                 [attr.aria-invalid]="fieldError('last_name') ? 'true' : null"
                 class="w-full px-3 py-2 text-sm rounded-lg border transition-colors
@@ -170,6 +172,7 @@ import { noWhitespace, validRole } from '@shared/validators/user.validators';
                 formControlName="username"
                 type="text"
                 autocomplete="username"
+                aria-required="true"
                 [attr.aria-describedby]="fieldError('username') ? 'username-error' : null"
                 [attr.aria-invalid]="fieldError('username') ? 'true' : null"
                 class="w-full px-3 py-2 text-sm rounded-lg border transition-colors font-mono
@@ -200,6 +203,7 @@ import { noWhitespace, validRole } from '@shared/validators/user.validators';
                 formControlName="email"
                 type="email"
                 autocomplete="email"
+                aria-required="true"
                 [attr.aria-describedby]="fieldError('email') ? 'email-error' : null"
                 [attr.aria-invalid]="fieldError('email') ? 'true' : null"
                 class="w-full px-3 py-2 text-sm rounded-lg border transition-colors
@@ -228,6 +232,7 @@ import { noWhitespace, validRole } from '@shared/validators/user.validators';
               <select
                 id="role"
                 formControlName="role"
+                aria-required="true"
                 [attr.aria-describedby]="fieldError('role') ? 'role-error' : null"
                 [attr.aria-invalid]="fieldError('role') ? 'true' : null"
                 class="w-full px-3 py-2 text-sm rounded-lg border transition-colors

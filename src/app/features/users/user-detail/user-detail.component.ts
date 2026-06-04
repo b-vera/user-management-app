@@ -183,7 +183,7 @@ import { ErrorStateComponent } from '@shared/components/error-state/error-state.
             </h2>
             <dl class="space-y-3">
               <div>
-                <dt class="text-xs text-neutral-400 dark:text-neutral-500">
+                <dt class="text-xs text-neutral-500 dark:text-neutral-400">
                   {{ 'users.form.fields.firstName' | translate }}
                 </dt>
                 <dd class="text-sm font-medium text-neutral-900 dark:text-neutral-100 mt-0.5">
@@ -191,7 +191,7 @@ import { ErrorStateComponent } from '@shared/components/error-state/error-state.
                 </dd>
               </div>
               <div>
-                <dt class="text-xs text-neutral-400 dark:text-neutral-500">
+                <dt class="text-xs text-neutral-500 dark:text-neutral-400">
                   {{ 'users.form.fields.lastName' | translate }}
                 </dt>
                 <dd class="text-sm font-medium text-neutral-900 dark:text-neutral-100 mt-0.5">
@@ -199,7 +199,7 @@ import { ErrorStateComponent } from '@shared/components/error-state/error-state.
                 </dd>
               </div>
               <div>
-                <dt class="text-xs text-neutral-400 dark:text-neutral-500">
+                <dt class="text-xs text-neutral-500 dark:text-neutral-400">
                   {{ 'users.form.fields.email' | translate }}
                 </dt>
                 <dd class="text-sm font-medium text-neutral-900 dark:text-neutral-100 mt-0.5">
@@ -225,7 +225,7 @@ import { ErrorStateComponent } from '@shared/components/error-state/error-state.
             </h2>
             <dl class="space-y-3">
               <div>
-                <dt class="text-xs text-neutral-400 dark:text-neutral-500">
+                <dt class="text-xs text-neutral-500 dark:text-neutral-400">
                   {{ 'users.form.fields.username' | translate }}
                 </dt>
                 <dd
@@ -235,7 +235,7 @@ import { ErrorStateComponent } from '@shared/components/error-state/error-state.
                 </dd>
               </div>
               <div>
-                <dt class="text-xs text-neutral-400 dark:text-neutral-500">
+                <dt class="text-xs text-neutral-500 dark:text-neutral-400">
                   {{ 'users.form.fields.role' | translate }}
                 </dt>
                 <dd class="mt-0.5">
@@ -245,7 +245,7 @@ import { ErrorStateComponent } from '@shared/components/error-state/error-state.
                 </dd>
               </div>
               <div>
-                <dt class="text-xs text-neutral-400 dark:text-neutral-500">
+                <dt class="text-xs text-neutral-500 dark:text-neutral-400">
                   {{ 'users.detail.createdAt' | translate }}
                 </dt>
                 <dd class="text-sm font-medium text-neutral-900 dark:text-neutral-100 mt-0.5">
@@ -253,7 +253,7 @@ import { ErrorStateComponent } from '@shared/components/error-state/error-state.
                 </dd>
               </div>
               <div>
-                <dt class="text-xs text-neutral-400 dark:text-neutral-500">
+                <dt class="text-xs text-neutral-500 dark:text-neutral-400">
                   {{ 'users.detail.updatedAt' | translate }}
                 </dt>
                 <dd class="text-sm font-medium text-neutral-900 dark:text-neutral-100 mt-0.5">

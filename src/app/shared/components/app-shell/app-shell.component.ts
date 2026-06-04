@@ -54,10 +54,11 @@ import { ThemeService } from '@core/services/theme.service';
           <a
             routerLink="/users"
             routerLinkActive="bg-white/10 border-l-2 border-brand-crimson"
+            #usersLink="routerLinkActive"
+            [attr.aria-current]="usersLink.isActive ? 'page' : null"
             class="flex items-center justify-center xl:justify-start gap-3 px-3 py-2.5 rounded-lg text-white/80
                    hover:bg-white/10 hover:text-white transition-colors text-sm font-medium
                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-            [attr.aria-current]="isUsersActive() ? 'page' : null"
             [title]="'nav.users' | translate"
             (click)="sidebarOpen.set(false)"
           >
@@ -189,10 +190,6 @@ export class AppShellComponent {
   readonly langService = inject(LanguageService);
   readonly themeService = inject(ThemeService);
   readonly sidebarOpen = signal(false);
-
-  isUsersActive(): boolean {
-    return location.pathname.startsWith('/users');
-  }
 
   sidebarClass(): string {
     const base =

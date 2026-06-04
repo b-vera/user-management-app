@@ -359,35 +359,45 @@ import { ErrorStateComponent } from '@shared/components/error-state/error-state.
         class="hidden md:block bg-white dark:bg-dark-surface rounded-xl shadow-sm overflow-hidden border border-neutral-200 dark:border-dark-border"
       >
         <div class="overflow-x-auto">
-          <table class="w-full text-sm" [attr.aria-label]="'users.list.title' | translate">
+          <table
+            class="w-full text-sm"
+            [attr.aria-label]="'users.list.title' | translate"
+            [attr.aria-busy]="store.isLoading() ? 'true' : null"
+          >
             <thead
               class="bg-neutral-50 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700"
             >
               <tr>
                 <th
+                  scope="col"
                   class="px-4 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider w-10"
                 ></th>
                 <th
+                  scope="col"
                   class="px-4 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider"
                 >
                   {{ 'users.columns.username' | translate }}
                 </th>
                 <th
+                  scope="col"
                   class="px-4 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider hidden lg:table-cell"
                 >
                   {{ 'users.columns.email' | translate }}
                 </th>
                 <th
+                  scope="col"
                   class="px-4 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider"
                 >
                   {{ 'users.columns.role' | translate }}
                 </th>
                 <th
+                  scope="col"
                   class="px-4 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider"
                 >
                   {{ 'users.columns.status' | translate }}
                 </th>
                 <th
+                  scope="col"
                   class="px-4 py-3 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider"
                 >
                   {{ 'users.columns.actions' | translate }}
