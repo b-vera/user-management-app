@@ -112,7 +112,23 @@ para obtener los códigos hex oficiales del logo (`#2C048C`, `#EB1453`)
 y se completó la escala de colores y tokens de diseño manualmente
 siguiendo principios de design systems. El humano revisó y aprobó los tokens antes de integrarlos.
 
-2. *Pendiente*
+### Caso 2 — Tailwind CSS v4 no genera utilities con Angular CLI
+**Problema:** La IA recomendó y configuró Tailwind CSS v4 (`@tailwindcss/postcss`).
+El build no fallaba, pero ninguna utility class (`bg-brand-indigo`, `.flex`, etc.) era generada.
+El CSS de salida contenía solo el `@layer base` (reset) pero cero utilities.
+
+**Cómo se identificó:** El usuario abrió el browser y vio la app sin estilos.
+Diagnóstico posterior: `curl http://localhost:4200/styles.css | grep ".flex"` devolvió 0 resultados.
+Prueba directa con Node.js confirmó que el PostCSS plugin funciona correctamente desde la raíz del proyecto,
+pero el contexto de ejecución de Angular's esbuild no lo permite.
+
+**Cómo se resolvió:** Migración a Tailwind CSS v3.4 (versión con integración probada con Angular CLI).
+- `tailwind.config.js` con `content: ['./src/**/*.{html,ts}']`
+- `postcss.config.js` con `{ tailwindcss: {}, autoprefixer: {} }`
+- `styles.scss` con `@tailwind base/components/utilities`
+- Los design tokens LATAM se trasladaron a `theme.extend.colors`
+- Tailwind v4 queda documentado como incompatible con Angular CLI 18 en este contexto.
+
 3. *Pendiente*
 
 ---

@@ -17,12 +17,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
       }
 
       <!-- Sidebar -->
-      <aside
-        [class]="sidebarClass()"
-        class="fixed top-0 left-0 h-full w-60 bg-brand-indigo z-30
-               flex flex-col transition-transform duration-300 ease-in-out"
-        aria-label="Navegación principal"
-      >
+      <aside [class]="sidebarClass()" aria-label="Navegación principal">
         <!-- Brand -->
         <div class="flex items-center gap-3 px-6 py-5 border-b border-white/10">
           <div
@@ -187,7 +182,10 @@ export class AppShellComponent {
   }
 
   sidebarClass(): string {
-    return this.sidebarOpen() ? 'translate-x-0' : '-translate-x-full md:translate-x-0';
+    const base =
+      'fixed top-0 left-0 h-full w-60 bg-brand-indigo z-30 flex flex-col transition-transform duration-300 ease-in-out';
+    const position = this.sidebarOpen() ? 'translate-x-0' : '-translate-x-full md:translate-x-0';
+    return `${base} ${position}`;
   }
 
   toggleDark(): void {
