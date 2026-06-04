@@ -1,5 +1,48 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import 'tailwindcss';
 
+/* LATAM Brand design tokens */
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Brand primaries */
+  --color-brand-indigo: #2c048c;
+  --color-brand-crimson: #eb1453;
+
+  /* Indigo scale */
+  --color-indigo-50: #f0eaff;
+  --color-indigo-100: #d9c8ff;
+  --color-indigo-500: #5b21e8;
+  --color-indigo-700: #2c048c;
+  --color-indigo-900: #160047;
+
+  /* Crimson scale */
+  --color-crimson-400: #f5537b;
+  --color-crimson-600: #eb1453;
+  --color-crimson-800: #a00038;
+
+  /* Dark mode surfaces */
+  --color-dark-bg: #0d0221;
+  --color-dark-surface: #1a0440;
+  --color-dark-border: #2c048c;
+
+  /* Neutral scale */
+  --color-neutral-50: #fafafa;
+  --color-neutral-100: #f4f4f5;
+  --color-neutral-300: #d1d5db;
+  --color-neutral-600: #52525b;
+  --color-neutral-900: #18181b;
+
+  /* Border radius */
+  --radius-DEFAULT: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 16px;
+}
+
+/* Dark mode via .dark class on <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Base reset */
 *,
 *::before,
 *::after {
@@ -9,19 +52,19 @@
 }
 
 html {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background-color: #fafafa;
-  color: #18181b;
+  background-color: var(--color-neutral-50);
+  color: var(--color-neutral-900);
   min-height: 100vh;
 }
 
 html.dark body {
-  background-color: #0d0221;
-  color: #f4f4f5;
+  background-color: var(--color-dark-bg);
+  color: var(--color-neutral-100);
 }
