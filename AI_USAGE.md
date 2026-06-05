@@ -201,6 +201,46 @@ vamos con t23
 #### Qué descarté
 - Nada descartado en esta sesión
 
+### Session 09 — Rediseño visual con Claude Design
+**Fecha:** 2026-06-05
+**Fase:** Fase 11 — Pulido visual
+
+#### Prompt enviado
+```
+Prompt de diseño completo con 7 secciones:
+1. CSS custom properties para superficies dark mode en styles.scss
+2. Utilidad avatar-color.util.ts + AvatarComponent con color determinista por hue y dot de estado
+3. Lista de usuarios: header de tabla, hover de fila, botones de acción solo-icono, chips de filtro, anillo de superficie
+4. BadgeComponent con dot + fondo oscuro dark mode y safelist en tailwind.config.js
+5. Detalle de usuario: banner gradiente, breadcrumb, fechas dd/MM/yyyy HH:mm, link de vuelta
+6. Sidebar: gradiente vertical, indicador activo crimson, chip "Operativo" en footer
+7. Toasts: tarjeta blanca con borde izquierdo de color
+```
+
+#### Qué generó la IA
+- `src/app/shared/utils/avatar-color.util.ts`: función hash determinista que retorna color `oklch()` a partir del nombre del usuario
+- `src/app/shared/components/avatar/avatar.component.ts`: componente standalone con imagen o iniciales, fondo dinámico por `avatarColor()`, dot de estado verde/neutral
+- `src/app/shared/components/badge/badge.component.ts`: componente con `variant` input (`admin|user|guest|active|inactive`), dot interno, dark mode con fondo `*/20` y borde `*/40`
+- `src/styles.scss`: CSS custom properties `--surface`, `--surface-2`, `--border-color`, `--text-muted` para light y dark mode
+- `tailwind.config.js`: safelist para clases dark mode dinámicas del BadgeComponent
+- `app-shell.component.ts`: gradiente `from-brand-indigo to-indigo-900` en sidebar, chip "Operativo" con punto verde en footer
+- `toast-container.component.ts`: rediseño a tarjeta blanca con franja izquierda de color, icono coloreado, dismiss discreto
+- `user-list.component.ts`: reemplazados avatares e inline-badges por `<app-avatar>` y `<app-badge>`
+- `user-detail.component.ts`: banner gradiente `from-brand-indigo to-crimson-600` con avatar superpuesto (`-mt-10`), badges migrados a `<app-badge>`
+
+#### Qué acepté
+- `oklch()` para color de avatar: produce colores visualmente distintos y saturados sin necesidad de un mapa estático
+- `<ng-content>` en BadgeComponent: permite pasar texto con pipe de traducción desde el template padre
+- `-mt-10` para solapar el avatar con el banner: técnica CSS estándar sin dependencias adicionales
+- Safelist en tailwind.config.js: necesario para que las clases dark mode generadas por computed strings no sean purgadas
+
+#### Qué modifiqué
+- Eliminados métodos `roleBadge()`, `statusBadge()` e `initials()` de `UserListComponent` y `UserDetailComponent` (reemplazados por los nuevos componentes)
+- Corregido `border-crimson-300` (no definido en config) por `border-crimson-400` en user-detail
+
+#### Qué descarté
+- `NgClass` en el dot del AvatarComponent — reemplazado por computed string para evitar importar NgClass
+
 ### Session 06 — T22: Unit tests UserStoreService
 **Fecha:** 2026-06-04
 **Fase:** Fase 9 — Tests

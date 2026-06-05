@@ -81,7 +81,15 @@ import { ThemeService } from '@core/services/theme.service';
         </nav>
 
         <!-- Footer -->
-        <div class="px-3 xl:px-6 py-4 border-t border-white/10">
+        <div
+          class="px-3 xl:px-6 py-4 border-t border-white/10 flex items-center justify-center xl:justify-start gap-2"
+        >
+          <span
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-400/20 text-green-300 border border-green-400/30"
+          >
+            <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+            <span class="hidden xl:inline">Operativo</span>
+          </span>
           <p class="text-white/40 text-xs hidden xl:block">v1.0.0</p>
         </div>
       </aside>
@@ -193,7 +201,7 @@ export class AppShellComponent {
 
   sidebarClass(): string {
     const base =
-      'fixed top-0 left-0 h-full w-60 md:w-16 xl:w-60 z-30 flex flex-col transition-transform duration-300 ease-in-out bg-brand-indigo dark:bg-dark-surface';
+      'fixed top-0 left-0 h-full w-60 md:w-16 xl:w-60 z-30 flex flex-col transition-transform duration-300 ease-in-out bg-gradient-to-b from-brand-indigo to-indigo-900 dark:from-dark-surface dark:to-dark-bg';
     const position = this.sidebarOpen() ? 'translate-x-0' : '-translate-x-full md:translate-x-0';
     return `${base} ${position}`;
   }

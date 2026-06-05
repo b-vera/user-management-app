@@ -15,14 +15,26 @@ import { ToastService, Toast } from '@core/services/toast.service';
       @for (toast of toastService.toasts(); track toast.id) {
         <div
           [attr.role]="toast.type === 'error' ? 'alert' : 'status'"
+          class="flex items-start gap-3 rounded-lg pl-0 pr-4 py-3 shadow-lg shadow-black/10 text-sm
+                 bg-white dark:bg-dark-surface border border-neutral-200 dark:border-dark-border
+                 overflow-hidden"
           [class]="toastClass(toast)"
-          class="flex items-start gap-3 rounded-lg px-4 py-3 shadow-lg text-sm font-medium"
         >
-          <span class="mt-0.5 shrink-0 text-base">{{ icon(toast) }}</span>
-          <span class="flex-1">{{ toast.message | translate }}</span>
+          <!-- Left color strip -->
+          <span class="w-1 self-stretch shrink-0 rounded-l-lg" [class]="stripClass(toast)"></span>
+          <!-- Icon -->
+          <span [class]="iconClass(toast)" class="mt-0.5 shrink-0 font-bold">{{
+            icon(toast)
+          }}</span>
+          <!-- Message -->
+          <span class="flex-1 text-neutral-900 dark:text-neutral-100">{{
+            toast.message | translate
+          }}</span>
+          <!-- Dismiss -->
           <button
             (click)="toastService.dismiss(toast.id)"
-            class="ml-auto shrink-0 opacity-70 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            class="ml-auto shrink-0 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200
+                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo rounded"
             [attr.aria-label]="'Cerrar notificación'"
           >
             ✕
@@ -35,14 +47,26 @@ import { ToastService, Toast } from '@core/services/toast.service';
 export class ToastContainerComponent {
   readonly toastService = inject(ToastService);
 
-  toastClass(toast: Toast): string {
-    const base = 'text-white';
-    const colors: Record<Toast['type'], string> = {
-      success: 'bg-green-600',
+  toastClass(_toast: Toast): string {
+    return '';
+  }
+
+  stripClass(toast: Toast): string {
+    const map: Record<Toast['type'], string> = {
+      success: 'bg-green-500',
       error: 'bg-crimson-600',
       info: 'bg-brand-indigo',
     };
-    return `${base} ${colors[toast.type]}`;
+    return map[toast.type];
+  }
+
+  iconClass(toast: Toast): string {
+    const map: Record<Toast['type'], string> = {
+      success: 'text-green-500',
+      error: 'text-crimson-600',
+      info: 'text-brand-indigo',
+    };
+    return map[toast.type];
   }
 
   icon(toast: Toast): string {

@@ -17,10 +17,28 @@ html {
 
 body {
   @apply bg-neutral-50 text-neutral-900 min-h-screen;
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
 }
 
 html.dark body {
   @apply bg-dark-bg text-neutral-100;
+}
+
+/* ── Dark mode CSS custom properties ──────────────────────────────────────── */
+:root {
+  --surface: #ffffff;
+  --surface-2: #f4f4f5;
+  --border-color: #e4e4e7;
+  --text-muted: #71717a;
+}
+
+html.dark {
+  --surface: #1a0440;
+  --surface-2: #230553;
+  --border-color: rgba(44, 4, 140, 0.45);
+  --text-muted: #a1a1aa;
 }
 
 /* ── CDK Overlay base (replaces overlay-prebuilt.css) ─────────────────────── */

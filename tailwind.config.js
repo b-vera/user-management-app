@@ -45,5 +45,22 @@ module.exports = {
       },
     },
   },
+  safelist: [
+    // AvatarComponent dot
+    'dark:ring-dark-surface',
+    // BadgeComponent dynamic dark variants
+    'dark:bg-indigo-500/20',
+    'dark:text-indigo-200',
+    'dark:border-indigo-500/40',
+    'dark:bg-blue-500/20',
+    'dark:text-blue-200',
+    'dark:border-blue-500/40',
+    'dark:bg-green-500/20',
+    'dark:text-green-200',
+    'dark:border-green-500/40',
+    'dark:bg-neutral-500/20',
+    'dark:text-neutral-300',
+    'dark:border-neutral-500/40',
+  ],
   plugins: [],
 };

@@ -10,6 +10,8 @@ import { User, UserRole } from '@core/models/user.model';
 import { SkeletonLoaderComponent } from '@shared/components/skeleton-loader/skeleton-loader.component';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '@shared/components/error-state/error-state.component';
+import { AvatarComponent } from '@shared/components/avatar/avatar.component';
+import { BadgeComponent } from '@shared/components/badge/badge.component';
 
 @Component({
   selector: 'app-user-list',
@@ -21,6 +23,8 @@ import { ErrorStateComponent } from '@shared/components/error-state/error-state.
     SkeletonLoaderComponent,
     EmptyStateComponent,
     ErrorStateComponent,
+    AvatarComponent,
+    BadgeComponent,
   ],
   template: `
     <!-- Page header -->
@@ -204,19 +208,11 @@ import { ErrorStateComponent } from '@shared/components/error-state/error-state.
           >
             <div class="p-4 flex items-start gap-3">
               <!-- Avatar -->
-              @if (user.image) {
-                <img
-                  [src]="user.image"
-                  [alt]="user.first_name + ' ' + user.last_name"
-                  class="w-10 h-10 rounded-full object-cover shrink-0"
-                />
-              } @else {
-                <div
-                  class="w-10 h-10 rounded-full bg-brand-indigo flex items-center justify-center text-white text-xs font-semibold shrink-0"
-                >
-                  {{ initials(user) }}
-                </div>
-              }
+              <app-avatar
+                [name]="user.first_name + ' ' + user.last_name"
+                [imageUrl]="user.image || ''"
+                [size]="40"
+              />
               <!-- Content -->
               <div class="flex-1 min-w-0">
                 <div class="flex items-start justify-between gap-2">
@@ -280,14 +276,14 @@ import { ErrorStateComponent } from '@shared/components/error-state/error-state.
                   {{ user.email }}
                 </p>
                 <div class="flex flex-wrap items-center gap-2 mt-2">
-                  <span [class]="roleBadge(user.role)">
+                  <app-badge [variant]="user.role">
                     {{ 'users.roles.' + user.role | translate }}
-                  </span>
-                  <span [class]="statusBadge(user.active)">
+                  </app-badge>
+                  <app-badge [variant]="user.active ? 'active' : 'inactive'">
                     {{
                       (user.active ? 'users.status.active' : 'users.status.inactive') | translate
                     }}
-                  </span>
+                  </app-badge>
                 </div>
               </div>
             </div>
@@ -408,19 +404,11 @@ import { ErrorStateComponent } from '@shared/components/error-state/error-state.
               @for (user of displayedUsers(); track user.id) {
                 <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
                   <td class="px-4 py-3">
-                    @if (user.image) {
-                      <img
-                        [src]="user.image"
-                        [alt]="user.first_name + ' ' + user.last_name"
-                        class="w-8 h-8 rounded-full object-cover"
-                      />
-                    } @else {
-                      <div
-                        class="w-8 h-8 rounded-full bg-brand-indigo flex items-center justify-center text-white text-xs font-semibold"
-                      >
-                        {{ initials(user) }}
-                      </div>
-                    }
+                    <app-avatar
+                      [name]="user.first_name + ' ' + user.last_name"
+                      [imageUrl]="user.image || ''"
+                      [size]="32"
+                    />
                   </td>
                   <td class="px-4 py-3">
                     <p class="font-medium text-neutral-900 dark:text-neutral-100">
@@ -434,16 +422,16 @@ import { ErrorStateComponent } from '@shared/components/error-state/error-state.
                     {{ user.email }}
                   </td>
                   <td class="px-4 py-3">
-                    <span [class]="roleBadge(user.role)">
+                    <app-badge [variant]="user.role">
                       {{ 'users.roles.' + user.role | translate }}
-                    </span>
+                    </app-badge>
                   </td>
                   <td class="px-4 py-3">
-                    <span [class]="statusBadge(user.active)">
+                    <app-badge [variant]="user.active ? 'active' : 'inactive'">
                       {{
                         (user.active ? 'users.status.active' : 'users.status.inactive') | translate
                       }}
-                    </span>
+                    </app-badge>
                   </td>
                   <td class="px-4 py-3">
                     <div class="flex items-center justify-end gap-1">
@@ -711,27 +699,6 @@ export class UserListComponent implements OnInit, OnDestroy {
       .subscribe((confirmed) => {
         if (confirmed) this.store.deactivateUser(user.id);
       });
-  }
-
-  initials(user: User): string {
-    return `${user.first_name[0] ?? ''}${user.last_name[0] ?? ''}`.toUpperCase();
-  }
-
-  roleBadge(role: string): string {
-    const base = 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium';
-    const colors: Record<string, string> = {
-      admin: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
-      user: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-      guest: 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400',
-    };
-    return `${base} ${colors[role] ?? colors['guest']}`;
-  }
-
-  statusBadge(active: boolean): string {
-    const base = 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium';
-    return active
-      ? `${base} bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300`
-      : `${base} bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400`;
   }
 
   private _fetch(q: string, skip = 0): void {

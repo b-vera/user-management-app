@@ -7,11 +7,21 @@ import { UserStoreService } from '@core/store/user-store.service';
 import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 import { SkeletonLoaderComponent } from '@shared/components/skeleton-loader/skeleton-loader.component';
 import { ErrorStateComponent } from '@shared/components/error-state/error-state.component';
+import { AvatarComponent } from '@shared/components/avatar/avatar.component';
+import { BadgeComponent } from '@shared/components/badge/badge.component';
 
 @Component({
   selector: 'app-user-detail',
   standalone: true,
-  imports: [RouterLink, DatePipe, TranslatePipe, SkeletonLoaderComponent, ErrorStateComponent],
+  imports: [
+    RouterLink,
+    DatePipe,
+    TranslatePipe,
+    SkeletonLoaderComponent,
+    ErrorStateComponent,
+    AvatarComponent,
+    BadgeComponent,
+  ],
   template: `
     <!-- Breadcrumb -->
     <nav
@@ -52,120 +62,128 @@ import { ErrorStateComponent } from '@shared/components/error-state/error-state.
       <div class="space-y-6">
         <!-- Header card -->
         <div
-          class="bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border p-6"
+          class="bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border overflow-hidden"
         >
-          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <!-- Avatar -->
-            @if (user.image) {
-              <img
-                [src]="user.image"
-                [alt]="user.first_name + ' ' + user.last_name"
-                class="w-20 h-20 rounded-full object-cover ring-4 ring-brand-indigo/20 shrink-0"
-              />
-            } @else {
-              <div
-                class="w-20 h-20 rounded-full bg-brand-indigo flex items-center justify-center
-                          text-white text-2xl font-bold ring-4 ring-brand-indigo/20 shrink-0"
-              >
-                {{ initials() }}
+          <!-- Gradient banner -->
+          <div
+            class="h-24 bg-gradient-to-br from-brand-indigo via-indigo-500 to-crimson-600
+                   dark:from-indigo-900 dark:via-dark-surface dark:to-dark-bg"
+          ></div>
+
+          <!-- Profile content -->
+          <div class="px-6 pb-6">
+            <div class="-mt-10 flex flex-col sm:flex-row items-start sm:items-end gap-4">
+              <!-- Avatar overlapping banner -->
+              <div class="shrink-0 rounded-full ring-4 ring-white dark:ring-dark-surface">
+                <app-avatar
+                  [name]="user.first_name + ' ' + user.last_name"
+                  [imageUrl]="user.image || ''"
+                  [size]="80"
+                  [showDot]="true"
+                  [active]="user.active"
+                />
               </div>
-            }
 
-            <!-- Name + badges -->
-            <div class="flex-1 min-w-0">
-              <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100 truncate">
-                {{ user.first_name }} {{ user.last_name }}
-              </h1>
-              <p class="text-neutral-500 dark:text-neutral-400 text-sm mt-0.5">
-                &#64;{{ user.username }}
-              </p>
-              <div class="flex flex-wrap gap-2 mt-3">
-                <span [class]="roleBadge(user.role)">
-                  {{ 'users.roles.' + user.role | translate }}
-                </span>
-                <span [class]="statusBadge(user.active)">
-                  {{ (user.active ? 'users.status.active' : 'users.status.inactive') | translate }}
-                </span>
-              </div>
-            </div>
+              <!-- Name + badges + actions -->
+              <div class="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-end gap-4 sm:pt-12">
+                <div class="flex-1 min-w-0">
+                  <h1 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100 truncate">
+                    {{ user.first_name }} {{ user.last_name }}
+                  </h1>
+                  <p class="text-neutral-500 dark:text-neutral-400 text-sm mt-0.5">
+                    &#64;{{ user.username }}
+                  </p>
+                  <div class="flex flex-wrap gap-2 mt-3">
+                    <app-badge [variant]="user.role">
+                      {{ 'users.roles.' + user.role | translate }}
+                    </app-badge>
+                    <app-badge [variant]="user.active ? 'active' : 'inactive'">
+                      {{
+                        (user.active ? 'users.status.active' : 'users.status.inactive') | translate
+                      }}
+                    </app-badge>
+                  </div>
+                </div>
 
-            <!-- Actions -->
-            <div class="flex flex-wrap gap-2 shrink-0">
-              <a
-                [routerLink]="['/users', user.id, 'edit']"
-                class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg
-                       bg-brand-indigo text-white hover:bg-indigo-900 transition-colors
-                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo focus-visible:ring-offset-2"
-                [attr.aria-label]="'users.actions.edit' | translate"
-              >
-                <svg
-                  class="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
-                </svg>
-                {{ 'users.actions.edit' | translate }}
-              </a>
-
-              @if (user.active) {
-                <button
-                  (click)="onDeactivate()"
-                  class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg
-                         border border-amber-300 text-amber-700 dark:border-amber-600 dark:text-amber-400
-                         hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors
-                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
-                  [attr.aria-label]="'users.actions.deactivate' | translate"
-                >
-                  <svg
-                    class="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
+                <!-- Actions -->
+                <div class="flex flex-wrap gap-2 shrink-0">
+                  <a
+                    [routerLink]="['/users', user.id, 'edit']"
+                    class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg
+                           bg-brand-indigo text-white hover:bg-indigo-900 transition-colors
+                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo focus-visible:ring-offset-2"
+                    [attr.aria-label]="'users.actions.edit' | translate"
                   >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
-                    />
-                  </svg>
-                  {{ 'users.actions.deactivate' | translate }}
-                </button>
-              }
+                    <svg
+                      class="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                    {{ 'users.actions.edit' | translate }}
+                  </a>
 
-              <button
-                (click)="onDelete()"
-                class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg
-                       border border-crimson-300 text-crimson-600 dark:border-crimson-600 dark:text-crimson-400
-                       hover:bg-crimson-50 dark:hover:bg-crimson-900/20 transition-colors
-                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crimson-600"
-                [attr.aria-label]="'users.actions.delete' | translate"
-              >
-                <svg
-                  class="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
-                </svg>
-                {{ 'users.actions.delete' | translate }}
-              </button>
+                  @if (user.active) {
+                    <button
+                      (click)="onDeactivate()"
+                      class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg
+                             border border-amber-300 text-amber-700 dark:border-amber-600 dark:text-amber-400
+                             hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors
+                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                      [attr.aria-label]="'users.actions.deactivate' | translate"
+                    >
+                      <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                        />
+                      </svg>
+                      {{ 'users.actions.deactivate' | translate }}
+                    </button>
+                  }
+
+                  <button
+                    (click)="onDelete()"
+                    class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg
+                           border border-crimson-400 text-crimson-600 dark:border-crimson-600 dark:text-crimson-400
+                           hover:bg-red-50 dark:hover:bg-crimson-900/20 transition-colors
+                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crimson-600"
+                    [attr.aria-label]="'users.actions.delete' | translate"
+                  >
+                    <svg
+                      class="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                    {{ 'users.actions.delete' | translate }}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -239,9 +257,9 @@ import { ErrorStateComponent } from '@shared/components/error-state/error-state.
                   {{ 'users.form.fields.role' | translate }}
                 </dt>
                 <dd class="mt-0.5">
-                  <span [class]="roleBadge(user.role)">{{
-                    'users.roles.' + user.role | translate
-                  }}</span>
+                  <app-badge [variant]="user.role">
+                    {{ 'users.roles.' + user.role | translate }}
+                  </app-badge>
                 </dd>
               </div>
               <div>
@@ -341,28 +359,5 @@ export class UserDetailComponent implements OnInit {
           this.router.navigate(['/users']);
         }
       });
-  }
-
-  initials(): string {
-    const u = this.store.selectedUser();
-    if (!u) return '';
-    return `${u.first_name[0] ?? ''}${u.last_name[0] ?? ''}`.toUpperCase();
-  }
-
-  roleBadge(role: string): string {
-    const base = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
-    const colors: Record<string, string> = {
-      admin: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
-      user: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-      guest: 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400',
-    };
-    return `${base} ${colors[role] ?? colors['guest']}`;
-  }
-
-  statusBadge(active: boolean): string {
-    const base = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
-    return active
-      ? `${base} bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300`
-      : `${base} bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400`;
   }
 }
