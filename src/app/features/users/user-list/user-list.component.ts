@@ -311,16 +311,30 @@ import { BadgeComponent } from '@shared/components/badge/badge.component';
 
         <!-- Mobile pagination -->
         <div class="flex items-center justify-between py-2">
-          <p class="text-sm text-neutral-600 dark:text-neutral-400">
-            {{
-              'common.pagination.page'
-                | translate
-                  : {
-                      current: store.pagination().currentPage,
-                      total: store.pagination().totalPages,
-                    }
-            }}
-          </p>
+          <div class="flex items-center gap-2">
+            <p class="text-sm text-neutral-600 dark:text-neutral-400">
+              {{
+                'common.pagination.page'
+                  | translate
+                    : {
+                        current: store.pagination().currentPage,
+                        total: store.pagination().totalPages,
+                      }
+              }}
+            </p>
+            <select
+              [value]="pageSize()"
+              (change)="onPageSizeChange($event)"
+              class="text-sm rounded-lg border border-neutral-300 dark:border-neutral-600
+                     bg-white dark:bg-dark-surface text-neutral-700 dark:text-neutral-300
+                     px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo"
+              aria-label="Usuarios por página"
+            >
+              @for (opt of pageSizeOptions; track opt) {
+                <option [value]="opt" [selected]="opt === pageSize()">{{ opt }} / pág</option>
+              }
+            </select>
+          </div>
           <div class="flex gap-2">
             <button
               (click)="prevPage()"
@@ -560,16 +574,30 @@ import { BadgeComponent } from '@shared/components/badge/badge.component';
         <div
           class="flex items-center justify-between px-4 py-3 border-t border-neutral-200 dark:border-neutral-700"
         >
-          <p class="text-sm text-neutral-600 dark:text-neutral-400">
-            {{
-              'common.pagination.page'
-                | translate
-                  : {
-                      current: store.pagination().currentPage,
-                      total: store.pagination().totalPages,
-                    }
-            }}
-          </p>
+          <div class="flex items-center gap-3">
+            <p class="text-sm text-neutral-600 dark:text-neutral-400">
+              {{
+                'common.pagination.page'
+                  | translate
+                    : {
+                        current: store.pagination().currentPage,
+                        total: store.pagination().totalPages,
+                      }
+              }}
+            </p>
+            <select
+              [value]="pageSize()"
+              (change)="onPageSizeChange($event)"
+              class="text-sm rounded-lg border border-neutral-300 dark:border-neutral-600
+                     bg-white dark:bg-dark-surface text-neutral-700 dark:text-neutral-300
+                     px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-indigo"
+              aria-label="Usuarios por página"
+            >
+              @for (opt of pageSizeOptions; track opt) {
+                <option [value]="opt" [selected]="opt === pageSize()">{{ opt }} / pág</option>
+              }
+            </select>
+          </div>
           <div class="flex gap-2">
             <button
               (click)="prevPage()"
@@ -606,6 +634,8 @@ export class UserListComponent implements OnInit, OnDestroy {
   readonly searchControl = new FormControl('', { nonNullable: true });
   readonly filterRole = signal<UserRole | ''>('');
   readonly filterActive = signal<boolean | null>(null);
+  readonly pageSize = signal(10);
+  readonly pageSizeOptions = [5, 10, 20];
 
   // Client-side filter applied on top of server results
   readonly displayedUsers = computed(() => {
@@ -622,7 +652,7 @@ export class UserListComponent implements OnInit, OnDestroy {
   );
 
   ngOnInit(): void {
-    this.load();
+    if (this.store.users().length === 0) this.load();
     this.searchControl.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe((q) => this._fetch(q));
@@ -634,7 +664,13 @@ export class UserListComponent implements OnInit, OnDestroy {
   }
 
   load(): void {
-    this.store.loadUsers({ limit: 10, skip: 0 });
+    this.store.loadUsers({ limit: this.pageSize(), skip: 0 });
+  }
+
+  onPageSizeChange(event: Event): void {
+    const size = Number((event.target as HTMLSelectElement).value);
+    this.pageSize.set(size);
+    this._fetch(this.searchControl.value, 0);
   }
 
   prevPage(): void {
@@ -694,7 +730,7 @@ export class UserListComponent implements OnInit, OnDestroy {
   }
 
   private _fetch(q: string, skip = 0): void {
-    const limit = this.store.params().limit;
+    const limit = this.pageSize();
     if (q.trim()) {
       this.store.searchUsers(q.trim(), { limit, skip });
     } else {

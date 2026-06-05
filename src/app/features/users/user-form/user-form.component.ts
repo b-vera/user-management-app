@@ -80,6 +80,17 @@ import { noWhitespace, validRole } from '@shared/validators/user.validators';
                 >
                   {{ 'users.actions.deactivate' | translate }}
                 </button>
+              } @else {
+                <button
+                  (click)="onActivate()"
+                  class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg
+                         border border-emerald-300 text-emerald-700 dark:border-emerald-600 dark:text-emerald-400
+                         hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors
+                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                  aria-label="Activar usuario"
+                >
+                  Activar
+                </button>
               }
               <button
                 (click)="onDelete()"
@@ -391,6 +402,13 @@ export class UserFormComponent implements OnInit {
       this.store.createUser(payload);
       this.router.navigate(['/users']);
     }
+  }
+
+  onActivate(): void {
+    const user = this.store.selectedUser();
+    if (!user) return;
+    this.store.updateUser(user.id, { active: true });
+    this.router.navigate(['/users', user.id]);
   }
 
   onDeactivate(): void {

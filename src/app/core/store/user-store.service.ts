@@ -6,6 +6,7 @@ import { LoggerService } from '@core/services/logger.service';
 import { ToastService } from '@core/services/toast.service';
 
 const DEFAULT_PARAMS: UserListParams = { limit: 10, skip: 0 };
+const MAX_USERS = 20;
 
 @Injectable({ providedIn: 'root' })
 export class UserStoreService {
@@ -20,6 +21,7 @@ export class UserStoreService {
   private readonly _error = signal<AppError | null>(null);
   private readonly _total = signal(0);
   private readonly _params = signal<UserListParams>(DEFAULT_PARAMS);
+  private readonly _localIds = new Set<number>();
 
   // Public readonly signals
   readonly users = this._users.asReadonly();
@@ -51,7 +53,7 @@ export class UserStoreService {
     this.api.getUsers(params).subscribe({
       next: (res) => {
         this._users.set(res.users);
-        this._total.set(res.total);
+        this._total.set(Math.min(res.total, MAX_USERS));
         this._isLoading.set(false);
         this.logger.log('loadUsers success', { count: res.users.length, total: res.total });
       },
@@ -83,6 +85,13 @@ export class UserStoreService {
   }
 
   loadUserById(id: number): void {
+    const cached = this._users().find((u) => u.id === id);
+    if (cached) {
+      this._selectedUser.set(cached);
+      this._error.set(null);
+      return;
+    }
+
     this._isLoading.set(true);
     this._error.set(null);
     this._selectedUser.set(null);
@@ -107,8 +116,8 @@ export class UserStoreService {
 
     this.api.createUser(payload).subscribe({
       next: (user) => {
-        this._users.update((list) => [user, ...list]);
-        this._total.update((t) => t + 1);
+        this._localIds.add(user.id);
+        this._users.update((list) => [user, ...list].slice(0, this._params().limit));
         this.logger.log('createUser success', user);
         this.toast.success('common.toast.created');
       },
@@ -121,18 +130,21 @@ export class UserStoreService {
   }
 
   updateUser(id: number, payload: Partial<User>): void {
+    const patched: User = { ...this._users().find((u) => u.id === id)!, ...payload };
+
+    this._users.update((list) => list.map((u) => (u.id === id ? patched : u)));
+    if (this._selectedUser()?.id === id) this._selectedUser.set(patched);
+
+    if (this._localIds.has(id)) {
+      this.toast.success('common.toast.updated');
+      return;
+    }
+
     const usersSnapshot = this._users();
     const selectedSnapshot = this._selectedUser();
 
-    // Optimistic: apply patch immediately
-    this._users.update((list) => list.map((u) => (u.id === id ? { ...u, ...payload } : u)));
-    if (this._selectedUser()?.id === id) {
-      this._selectedUser.update((u) => (u ? { ...u, ...payload } : null));
-    }
-
     this._optimistic(this.api.updateUser(id, payload), {
       onSuccess: (updated) => {
-        // Merge server response with our payload so fields the API doesn't echo are preserved
         const confirmed: User = { ...updated, ...payload };
         this._users.update((list) => list.map((u) => (u.id === id ? confirmed : u)));
         if (this._selectedUser()?.id === id) this._selectedUser.set(confirmed);
@@ -149,12 +161,18 @@ export class UserStoreService {
   }
 
   deleteUser(id: number): void {
+    this._users.update((list) => list.filter((u) => u.id !== id));
+
+    if (this._localIds.has(id)) {
+      this._localIds.delete(id);
+      this.toast.success('common.toast.deleted');
+      return;
+    }
+
+    this._total.update((t) => t - 1);
+
     const usersSnapshot = this._users();
     const totalSnapshot = this._total();
-
-    // Optimistic: remove immediately
-    this._users.update((list) => list.filter((u) => u.id !== id));
-    this._total.update((t) => t - 1);
 
     this._optimistic(this.api.deleteUser(id), {
       onSuccess: () => {
@@ -171,14 +189,19 @@ export class UserStoreService {
   }
 
   deactivateUser(id: number): void {
+    const patched = { active: false } as Partial<User>;
+    this._users.update((list) => list.map((u) => (u.id === id ? { ...u, ...patched } : u)));
+    if (this._selectedUser()?.id === id) {
+      this._selectedUser.update((u) => (u ? { ...u, ...patched } : null));
+    }
+
+    if (this._localIds.has(id)) {
+      this.toast.success('common.toast.deactivated');
+      return;
+    }
+
     const usersSnapshot = this._users();
     const selectedSnapshot = this._selectedUser();
-
-    // Optimistic: set active = false immediately
-    this._users.update((list) => list.map((u) => (u.id === id ? { ...u, active: false } : u)));
-    if (this._selectedUser()?.id === id) {
-      this._selectedUser.update((u) => (u ? { ...u, active: false } : null));
-    }
 
     this._optimistic(this.api.updateUser(id, { active: false }), {
       onSuccess: (updated) => {
