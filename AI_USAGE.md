@@ -140,6 +140,33 @@ pasemos a la siguiente tarea, t20
 #### Qué descarté
 - Nada descartado en esta sesión
 
+### Session 06 — T22: Unit tests UserStoreService
+**Fecha:** 2026-06-04
+**Fase:** Fase 9 — Tests
+
+#### Prompt enviado
+```
+[continuación automática tras recompresión de contexto — T22 ya confirmado en sesión anterior]
+```
+
+#### Qué generó la IA
+- `user-store.service.spec.ts` con 4 tests usando `jasmine.createSpyObj` para `UserApiService`, `ToastService` y `LoggerService`
+- Test 1: `loadUsers()` popula el signal `users` y setea `isLoading` a `false` tras éxito
+- Test 2: `isLoading` es `true` mientras el `Subject` no ha emitido y `false` tras `next()`/`complete()`
+- Test 3 (optimista): `deleteUser(1)` elimina el usuario del signal ANTES de que el `Subject` responda — verifica con `expect(store.users().length).toBe(1)` antes de flushar
+- Test 4 (rollback): `deleteUser(1)` falla con `subject$.error(...)` → los 2 usuarios vuelven al signal y `hasError()` retorna `true`
+- Patrón de siembra de estado: `(store as any)['_users'].set([...])` para inyectar usuarios sin pasar por `loadUsers()`
+
+#### Qué acepté
+- Mock de los 3 servicios inyectados para aislamiento total (no side-effects de Toast ni Logger)
+- Acceso al signal privado `_users` via bracket notation para tests 3 y 4 — evita acoplar el setup a `loadUsers()`
+
+#### Qué modifiqué
+- Nada — 4/4 tests en verde en primera ejecución
+
+#### Qué descarté
+- Nada descartado en esta sesión
+
 ### Session 05 — T21: Unit tests UserApiService
 **Fecha:** 2026-06-04
 **Fase:** Fase 9 — Tests
