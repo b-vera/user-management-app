@@ -10,7 +10,7 @@ A Single Page Application for internal admin user management, built as a fronten
 
 ### Prerequisites
 
-- Node.js 18+ (LTS recommended)
+- Node.js 20+ (LTS recommended)
 - npm 9+
 
 ### Install
@@ -39,8 +39,8 @@ npx ng test --include="**/user-api.service.spec.ts" --watch=false
 ### Run E2E tests
 
 ```bash
-# The dev server must be running first (npm start)
 npm run e2e
+# Playwright starts and stops the dev server automatically via the webServer config.
 ```
 
 ### Build for production
@@ -107,7 +107,7 @@ DummyJSON does not persist mutations. The app uses an in-memory Angular Signals 
 - **Optimistic updates**: mutations are applied to the store immediately, before the API responds.
 - **Rollback**: if the API returns an error, the previous snapshot is restored.
 - **POST / PUT / DELETE** responses are merged with the sent payload so fields not echoed by the API (e.g. `active`) are preserved in the store.
-- Reloading the page resets the store and re-fetches from DummyJSON — this is expected and documented behaviour for a demo API.
+- Reloading the page resets the store and re-fetches from DummyJSON — expected and documented behaviour for a demo API.
 
 ---
 
@@ -185,7 +185,8 @@ src/
 │   │       ├── user-detail/  # Read-only detail view
 │   │       └── user-form/    # Create / Edit reactive form
 │   └── shared/
-│       ├── components/       # AppShell, ConfirmDialog, ToastContainer, SkeletonLoader
+│       ├── components/       # AppShell, Avatar, Badge, ConfirmDialog, ToastContainer, SkeletonLoader
+│       ├── utils/            # avatar-color.util (deterministic oklch color from username)
 │       └── validators/       # noWhitespace, validRole custom validators
 ├── environments/             # environment.ts / environment.production.ts
 └── styles.scss               # Tailwind directives + CDK overlay base CSS
