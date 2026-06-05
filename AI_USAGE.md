@@ -17,7 +17,7 @@
 | Architecture | 60% | 40% | AI propuso opciones; humano tomó las decisiones finales (state, UI lib, bonus scope) |
 | Components | 80% | 20% | IA generó templates completos; humano revisó, ajustó clases responsive y aprobó |
 | Services | 75% | 25% | IA generó lógica de servicios; humano identificó bugs (CDK overlay, optimistic updates) |
-| Tests | — | — | *Pendiente* |
+| Tests | 85% | 15% | IA generó tests y fixtures; humano revisó cobertura y aprobó estrategia de interceptor en TestBed |
 | CI/CD | — | — | *Pendiente* |
 | Documentation | 50% | 50% | AI generó estructura; humano revisó y completó con contexto real |
 
@@ -107,6 +107,64 @@ trabajemos en el T19
 
 #### Qué modifiqué
 - Identifiqué que el modal seguía apareciendo abajo tras el primer fix del servicio; la IA diagnosticó que faltaba el CSS base del CDK overlay (`overlay-prebuilt.css`) y lo añadió directamente en `styles.scss`
+
+#### Qué descarté
+- Nada descartado en esta sesión
+
+### Session 04 — T20: Accesibilidad WCAG 2.1 AA
+**Fecha:** 2026-06-04
+**Fase:** Fase 8 — Quality
+
+#### Prompt enviado
+```
+pasemos a la siguiente tarea, t20
+[contexto: BACKLOG.md T20 cargado en el IDE — Accesibilidad WCAG 2.1 AA]
+```
+
+#### Qué generó la IA
+- Auditoría sistemática de todos los componentes contra WCAG 2.1 AA antes de tocar código
+- `index.html`: `lang="es"` y título descriptivo "Gestión de Usuarios"
+- `UserListComponent`: `scope="col"` en todos los `<th>`; `aria-busy` bound al estado de carga
+- `UserFormComponent`: `aria-required="true"` en los 5 campos obligatorios (inputs + select)
+- `UserDetailComponent`: contraste corregido en labels `<dt>` — `text-neutral-400` → `text-neutral-500` (2.5:1 → 4.6:1)
+- `ConfirmDialogComponent`: `tabindex="-1"` en root div; `cdkFocusInitial` en botón Cancelar; import `A11yModule`
+- `AppShellComponent`: `aria-current` reactivo via template ref `#usersLink="routerLinkActive"`, eliminado `isUsersActive()` basado en `location.pathname`
+
+#### Qué acepté
+- Enfoque de auditoría previa a los cambios para identificar todos los gaps antes de implementar
+- Uso de `routerLinkActive` template ref en lugar de `location.pathname` para `aria-current`
+
+#### Qué modifiqué
+- El usuario pidió revisar y respetar el formato de los commits anteriores — los dos commits de T19 y T20 fueron enmendados con `git reset --hard` + `cherry-pick` y force push para eliminar los prefijos de componente en los bullets
+
+#### Qué descarté
+- Nada descartado en esta sesión
+
+### Session 05 — T21: Unit tests UserApiService
+**Fecha:** 2026-06-04
+**Fase:** Fase 9 — Tests
+
+#### Prompt enviado
+```
+pasemos a la siguiente tarea
+[contexto implícito: siguiente tarea en el backlog es T21]
+```
+
+#### Qué generó la IA
+- `user-api.service.spec.ts` con 4 tests usando `HttpTestingController`
+- Test 1: `getUsers()` mapea `firstName`/`lastName` a `first_name`/`last_name` y deriva `active: true`
+- Test 2: `getUserById()` retorna `User` con `active: true` derivado del payload raw
+- Test 3: `getUserById()` lanza `AppError` con `status: 404` y `message: 'error.notFound'`
+- Test 4: `searchUsers()` llama a `/users/search` con el param `q` correcto
+- Decisión de incluir `apiInterceptor` en el `TestBed` para que el mapeo de `HttpErrorResponse → AppError` sea ejercido en el test 3
+- Helper `mockRaw()` y `mockListResponse()` para construir fixtures tipados sin repetición
+
+#### Qué acepté
+- Incluir el interceptor en los providers del test (no mockear el error a nivel de servicio)
+- Uso de función predicate en `expectOne()` para validar URL + query params por separado
+
+#### Qué modifiqué
+- Nada — 4/4 tests en verde en primera ejecución
 
 #### Qué descarté
 - Nada descartado en esta sesión
