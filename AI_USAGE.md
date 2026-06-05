@@ -18,7 +18,7 @@
 | Components | 80% | 20% | IA generó templates completos; humano revisó, ajustó clases responsive y aprobó |
 | Services | 75% | 25% | IA generó lógica de servicios; humano identificó bugs (CDK overlay, optimistic updates) |
 | Tests | 85% | 15% | IA generó tests y fixtures; humano revisó cobertura y aprobó estrategia de interceptor en TestBed |
-| CI/CD | — | — | *Pendiente* |
+| CI/CD | — | — | No implementado (fuera de scope del challenge) |
 | Documentation | 50% | 50% | AI generó estructura; humano revisó y completó con contexto real |
 
 ---
@@ -261,11 +261,11 @@ pasemos a la siguiente tarea
 
 ## Where AI Helped Most
 
-> Se completa con ejemplos concretos al terminar el proyecto.
+1. **Templates complejos con Tailwind**: la IA generó todos los templates de `UserListComponent`, `UserDetailComponent` y `UserFormComponent` con clases Tailwind, dark mode, badges por rol/estado, tooltips, accesibilidad y lógica de renderizado condicional — trabajo que habría tomado días manual. El humano revisó, ajustó breakpoints y aprobó antes de cada commit.
 
-1. **Templates complejos con Tailwind**: la IA generó todos los templates de `UserListComponent`, `UserDetailComponent` y `UserFormComponent` con clases Tailwind, dark mode, badges por rol/estado, tooltips, accesibilidad y lógica de renderizado condicional — trabajo que habría tomado días manual.
-2. *Pendiente — completar al cerrar Fase 9 (Tests)*
-3. *Pendiente — completar al cerrar Fase 10 (E2E)*
+2. **Patrón de optimistic update con rollback**: el helper privado `_optimistic<T>(apiCall$, {onSuccess, onError})` en `UserStoreService` captura el patrón snapshot → mutate → API → confirm/rollback de forma reutilizable. La IA propuso la abstracción y el humano la validó aplicándola a `updateUser`, `deleteUser` y `deactivateUser`.
+
+3. **Suite de tests con HttpTestingController**: los 4 tests de `UserApiService` incluyendo la decisión de incluir el `apiInterceptor` real en el TestBed para ejercitar el mapeo `HttpErrorResponse → AppError` sin mockear el error path. La IA generó los 4 tests en verde en primera ejecución.
 
 ---
 
@@ -357,14 +357,13 @@ Regla aplicada: la versión de `@angular/cdk` siempre debe coincidir con la de `
 
 ## Prompting Strategy
 
-*Se completa al terminar el proyecto con una reflexión sobre cómo se estructuraron los prompts,
-qué contexto se proporcionó en cada sesión, cómo se iteró sobre el output, y cuándo se eligió
-escribir código manualmente en lugar de delegarlo a la IA.*
+**Estructura general**: cada sesión de trabajo arrancaba con el contexto del proyecto ya cargado (archivos abiertos en el IDE, BACKLOG.md como referencia) y un prompt que especificaba exactamente qué tarea implementar con sus criterios de aceptación como se describe en los archivos de `/prompts/`.
 
-Estructura general utilizada:
-- **Prompt 1** (Arquitectura): contexto del stack fijo + lista de decisiones a tomar con criterios
-- **Prompt 2** (Planificación): arquitectura ya definida + instrucción de backlog incremental con 4 campos por tarea
-- **Prompt 3** (Desarrollo): contexto del proyecto + estado actual de tareas completadas + tarea específica con criterios de aceptación observables
+**Contexto proporcionado**: stack fijo (Angular 18, Tailwind, Signals), decisiones ya tomadas, archivos existentes relevantes, y criterios de aceptación observables (no "que compile"). Esto evitó que la IA propusiera patrones incompatibles con el stack.
+
+**Iteración**: el ciclo fue: generar → revisar → aprobar o corregir → corregir en el código si hacía falta → commit. En ningún caso se hizo commit sin revisión humana. Las correcciones más frecuentes fueron en selectores de Playwright (T24), en el manejo del campo `active` en el mapper (bug real), y en el formato de los commits (T19-T20).
+
+**Cuándo escribí código manualmente**: las decisiones de arquitectura (elegir Tailwind sobre Material, incluir todos los bonus), los design tokens de la paleta LATAM, y las correcciones de bugs que requerían entender la interacción entre el store y el ciclo de vida de los componentes (el `load()` guard en UserDetailComponent).
 
 ---
 
