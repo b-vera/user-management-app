@@ -140,6 +140,33 @@ pasemos a la siguiente tarea, t20
 #### Qué descarté
 - Nada descartado en esta sesión
 
+### Session 07 — T23: Unit tests validadores del formulario
+**Fecha:** 2026-06-04
+**Fase:** Fase 9 — Tests
+
+#### Prompt enviado
+```
+vamos con t23
+```
+
+#### Qué generó la IA
+- `user.validators.spec.ts` con 4 tests puramente unitarios (sin `TestBed`)
+- Test 1: `noWhitespace` retorna `null` con `'juanperez'` y `{ noWhitespace: true }` con `'juan perez'`
+- Test 2: `noWhitespace` retorna `null` con string vacío
+- Test 3: `FormGroup` construido con `new FormBuilder()` es inválido con `username: ''`
+- Test 4: `FormGroup` es válido con todos los campos correctamente llenados
+- Diagnóstico del error TS5103: conflicto entre TypeScript 6.x del IDE (global) y TypeScript 5.5.4 del proyecto (`node_modules`) — `"ignoreDeprecations": "6.0"` es válido en TS6 pero inválido para el compilador del proyecto
+
+#### Qué acepté
+- Tests sin `TestBed` — instancias directas de `FormControl` y `FormBuilder`
+- Fix: eliminar `ignoreDeprecations: "6.0"` del tsconfig (la advertencia del IDE es un falso positivo de la versión global de TS)
+
+#### Qué modifiqué
+- Nada — 4/4 tests en verde en primera ejecución tras fix del tsconfig
+
+#### Qué descarté
+- Nada descartado en esta sesión
+
 ### Session 06 — T22: Unit tests UserStoreService
 **Fecha:** 2026-06-04
 **Fase:** Fase 9 — Tests
