@@ -132,10 +132,11 @@ export class UserStoreService {
 
     this._optimistic(this.api.updateUser(id, payload), {
       onSuccess: (updated) => {
-        // Replace optimistic data with confirmed server response
-        this._users.update((list) => list.map((u) => (u.id === id ? updated : u)));
-        if (this._selectedUser()?.id === id) this._selectedUser.set(updated);
-        this.logger.log('updateUser confirmed', updated);
+        // Merge server response with our payload so fields the API doesn't echo are preserved
+        const confirmed: User = { ...updated, ...payload };
+        this._users.update((list) => list.map((u) => (u.id === id ? confirmed : u)));
+        if (this._selectedUser()?.id === id) this._selectedUser.set(confirmed);
+        this.logger.log('updateUser confirmed', confirmed);
         this.toast.success('common.toast.updated');
       },
       onError: (err) => {
@@ -181,8 +182,9 @@ export class UserStoreService {
 
     this._optimistic(this.api.updateUser(id, { active: false }), {
       onSuccess: (updated) => {
-        this._users.update((list) => list.map((u) => (u.id === id ? updated : u)));
-        if (this._selectedUser()?.id === id) this._selectedUser.set(updated);
+        const confirmed: User = { ...updated, active: false };
+        this._users.update((list) => list.map((u) => (u.id === id ? confirmed : u)));
+        if (this._selectedUser()?.id === id) this._selectedUser.set(confirmed);
         this.logger.log('deactivateUser confirmed', { id });
         this.toast.success('common.toast.deactivated');
       },

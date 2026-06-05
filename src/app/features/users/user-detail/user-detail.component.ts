@@ -305,7 +305,9 @@ export class UserDetailComponent implements OnInit {
 
   load(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (id) this.store.loadUserById(id);
+    if (id && this.store.selectedUser()?.id !== id) {
+      this.store.loadUserById(id);
+    }
   }
 
   onDeactivate(): void {
