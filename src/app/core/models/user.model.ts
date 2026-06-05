@@ -23,6 +23,7 @@ export interface DummyJsonUser {
   lastName: string;
   role: string;
   image: string;
+  active?: boolean;
 }
 
 export interface DummyJsonListResponse {
@@ -68,7 +69,7 @@ export function mapDummyJsonToUser(raw: DummyJsonUser, index = 0): User {
     role: VALID_ROLES.includes(raw.role as UserRole) ? (raw.role as UserRole) : 'user',
     created_at: created,
     updated_at: updated,
-    active: true,
+    active: raw.active ?? true,
     image: raw.image,
   };
 }

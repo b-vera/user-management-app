@@ -140,6 +140,40 @@ pasemos a la siguiente tarea, t20
 #### Qué descarté
 - Nada descartado en esta sesión
 
+### Session 08 — T24: Playwright E2E — flujo completo
+**Fecha:** 2026-06-04
+**Fase:** Fase 10 — E2E
+
+#### Prompt enviado
+```
+sigamos con t24
+```
+
+#### Qué generó la IA
+- `e2e/users.spec.ts` con 4 tests en `test.describe.serial`
+- `test.use({ locale: 'es' })` para forzar español (sin esto `navigator.language` = 'en' y la app mostraba English)
+- Test 1: navega a `/users/new`, llena el formulario, submit, verifica toast "Usuario creado exitosamente" y redirect a `/users`
+- Test 2: navega a `/users`, espera tabla poblada, busca 'emily', verifica fila de tabla con 'emilys' (selector `tbody tr` para evitar los cards móviles ocultos)
+- Test 3: navega a `/users/1/edit`, cambia email, guarda, verifica toast "Usuario actualizado exitosamente"
+- Test 4: navega a `/users/2/edit`, click "Desactivar", confirma en `role="alertdialog"`, verifica toast y badge "Inactivo"
+- `playwright.config.ts` ya existía con `webServer`, `screenshot: 'on'` y `video: 'retain-on-failure'`
+- 8 screenshots en `e2e/screenshots/` para todos los pasos clave
+
+#### Bugs encontrados y corregidos
+- **Locale**: botón "Crear usuario" no encontrado porque Playwright arranca en inglés → `test.use({ locale: 'es' })` fuerza español
+- **Strict mode violation**: `getByText('emilys')` resolvía a 2 elementos (card móvil oculto + fila de tabla) → selector cambiado a `tbody tr` que filtra solo el DOM visible en desktop
+- **Badge "Inactivo" revertía**: `mapDummyJsonToUser` tenía `active: true` hardcodeado → ignoraba el campo `active: false` del PUT response de dummyjson → la IA identificó que era un bug real en el modelo, no solo un problema de test. Fix: `active?: boolean` en `DummyJsonUser` + `active: raw.active ?? true` en el mapper
+- **Re-fetch en detail page**: después de deactivate, el form navega a `/users/2`, el detail component hace GET que devuelve `active: true` (dummyjson no persiste). Fix: `page.route()` intercepta la GET post-deactivation y agrega `active: false` al response
+
+#### Qué acepté
+- Interception de red con `page.route()` para simular persistencia de dummyjson — estrategia estándar para E2E contra APIs externas que no garantizan estado
+
+#### Qué modifiqué
+- Nada adicional — 4/4 tests en verde tras las iteraciones de diagnóstico
+
+#### Qué descarté
+- Nada descartado en esta sesión
+
 ### Session 07 — T23: Unit tests validadores del formulario
 **Fecha:** 2026-06-04
 **Fase:** Fase 9 — Tests
