@@ -74,10 +74,9 @@ import { BadgeComponent } from '@shared/components/badge/badge.component';
           <div class="px-6 pb-6">
             <div class="-mt-10 flex flex-col sm:flex-row items-start sm:items-end gap-4">
               <!-- Avatar overlapping banner -->
-              <div class="shrink-0 rounded-full ring-4 ring-white dark:ring-dark-surface">
+              <div class="shrink-0">
                 <app-avatar
                   [name]="user.first_name + ' ' + user.last_name"
-                  [imageUrl]="user.image || ''"
                   [size]="80"
                   [showDot]="true"
                   [active]="user.active"

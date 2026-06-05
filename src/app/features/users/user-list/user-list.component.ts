@@ -208,11 +208,7 @@ import { BadgeComponent } from '@shared/components/badge/badge.component';
           >
             <div class="p-4 flex items-start gap-3">
               <!-- Avatar -->
-              <app-avatar
-                [name]="user.first_name + ' ' + user.last_name"
-                [imageUrl]="user.image || ''"
-                [size]="40"
-              />
+              <app-avatar [name]="user.first_name + ' ' + user.last_name" [size]="40" />
               <!-- Content -->
               <div class="flex-1 min-w-0">
                 <div class="flex items-start justify-between gap-2">
@@ -402,13 +398,9 @@ import { BadgeComponent } from '@shared/components/badge/badge.component';
             </thead>
             <tbody class="divide-y divide-neutral-100 dark:divide-neutral-700">
               @for (user of displayedUsers(); track user.id) {
-                <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                <tr class="hover:bg-neutral-50/70 dark:hover:bg-white/[0.03] transition-colors">
                   <td class="px-4 py-3">
-                    <app-avatar
-                      [name]="user.first_name + ' ' + user.last_name"
-                      [imageUrl]="user.image || ''"
-                      [size]="32"
-                    />
+                    <app-avatar [name]="user.first_name + ' ' + user.last_name" [size]="38" />
                   </td>
                   <td class="px-4 py-3">
                     <p class="font-medium text-neutral-900 dark:text-neutral-100">

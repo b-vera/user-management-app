@@ -20,7 +20,17 @@ import { ThemeService } from '@core/services/theme.service';
       }
 
       <!-- Sidebar -->
-      <aside [class]="sidebarClass()" aria-label="Navegación principal">
+      <aside
+        [class]="sidebarClass()"
+        style="background: linear-gradient(178deg, #34069E 0%, #2C048C 42%, #160047 100%)"
+        aria-label="Navegación principal"
+      >
+        <!-- Hairline separator on right edge -->
+        <span
+          class="pointer-events-none absolute inset-y-0 right-0 w-px"
+          style="background: linear-gradient(180deg, transparent, rgba(255,255,255,.14), transparent)"
+        ></span>
+
         <!-- Brand -->
         <div
           class="flex items-center justify-center xl:justify-start gap-3 px-3 xl:px-6 py-5 border-b border-white/10"
@@ -53,15 +63,19 @@ import { ThemeService } from '@core/services/theme.service';
         <nav class="flex-1 px-3 py-4 space-y-1" aria-label="Secciones">
           <a
             routerLink="/users"
-            routerLinkActive="bg-white/10 border-l-2 border-brand-crimson"
+            routerLinkActive
             #usersLink="routerLinkActive"
+            [class]="navItemClass(usersLink.isActive)"
             [attr.aria-current]="usersLink.isActive ? 'page' : null"
-            class="flex items-center justify-center xl:justify-start gap-3 px-3 py-2.5 rounded-lg text-white/80
-                   hover:bg-white/10 hover:text-white transition-colors text-sm font-medium
-                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             [title]="'nav.users' | translate"
             (click)="sidebarOpen.set(false)"
           >
+            @if (usersLink.isActive) {
+              <span
+                class="absolute left-0 top-1/2 -translate-y-1/2 h-5 rounded-r-full"
+                style="width:3px; background:#EB1453; box-shadow:0 0 8px #EB1453"
+              ></span>
+            }
             <svg
               class="w-5 h-5 shrink-0"
               fill="none"
@@ -201,9 +215,17 @@ export class AppShellComponent {
 
   sidebarClass(): string {
     const base =
-      'fixed top-0 left-0 h-full w-60 md:w-16 xl:w-60 z-30 flex flex-col transition-transform duration-300 ease-in-out bg-gradient-to-b from-brand-indigo to-indigo-900 dark:from-dark-surface dark:to-dark-bg';
+      'fixed top-0 left-0 h-full w-60 md:w-16 xl:w-60 z-30 flex flex-col transition-transform duration-300 ease-in-out';
     const position = this.sidebarOpen() ? 'translate-x-0' : '-translate-x-full md:translate-x-0';
     return `${base} ${position}`;
+  }
+
+  navItemClass(active: boolean): string {
+    const base =
+      'relative flex items-center justify-center xl:justify-start gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white';
+    return active
+      ? `${base} bg-white/10 text-white`
+      : `${base} text-white/70 hover:bg-white/10 hover:text-white`;
   }
 
   toggleLang(): void {

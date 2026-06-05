@@ -23,9 +23,9 @@ module.exports = {
           800: '#A00038',
         },
         dark: {
-          bg: '#0D0221',
-          surface: '#1A0440',
-          border: '#2C048C',
+          bg: '#0E0D14',
+          surface: '#15131F',
+          border: '#252336',
         },
         neutral: {
           50: '#FAFAFA',
